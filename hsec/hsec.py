@@ -10,6 +10,12 @@ from MCP23017 import MCP23017 #import my custom class
 
 def configLogging():
     log = logging.getLogger('hsec')
+
+    # has this already run? If so, don't add more handlers or you'll get duplicate logging
+    if len(log.handlers):
+        return
+
+    # set level of output. DEBUG if in development.
     log.setLevel(logging.DEBUG)
 
     # create console handler and set level to debug
@@ -25,7 +31,7 @@ def configLogging():
     # add ch to logger
     log.addHandler(ch)
 
-def main():
+def setup():
 
     # setup logging
     log = logging.getLogger('hsec')
@@ -47,22 +53,38 @@ def main():
     #chip1.portA.pins[0].print_self()
     #chip1.portA.pins[1].print_self()
 
-    chip1.print_self()
+    #chip1.print_self()
 
     # GPIO5.Interrupt => chip1.lookForEvents()
     # chip1.showConfig() # print the pins with desc and the chip config.
 
     #channel = Channel()
 
-    while True:
-        chip1.check_for_events()
-        time.sleep(0.10)
-        break
+    return chip1
 
-
-    log.info("ending home security")
+def loop( chip1 ):
+    log = logging.getLogger('hsec')
+    try:
+        # loop through logging calls to see the difference
+        # new configurations make, until Ctrl+C is pressed
+        while True:
+            log.debug('debug message')
+            log.info('info message')
+            log.warn('warn message')
+            log.error('error message')
+            log.critical('critical message')
+            chip1.check_for_events()
+            time.sleep(0.10)
+    except KeyboardInterrupt:
+        # cleanup
+        log.info("ending home security")
+        log.shutdown()
 
 
 
 if __name__ == '__main__':
-    main()
+
+    # setup returns a chip and passes it to loop.
+    loop(setup())
+
+

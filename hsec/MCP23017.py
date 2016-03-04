@@ -1,4 +1,13 @@
 #!/usr/bin/env python3.4
+"""
+I originally thought of using computerlyrik/MCP23017-RPi-python but it seemed overly 
+complex/full-featured for what I wanted.  I wrote this from scratch based on the 
+abstractions that made sense to me but I followed some conventions that computerlyrik
+was using in order to ease a transition to his module if I later decide to and also 
+to make mine more understandable in the context of the other.  Also, I use smbus where
+his uses i2c. They really aren't similar at all but I want to make it clear that I was
+reading computerlyrik/MCP23017-RPi-python and following some of those conventions/styles.
+"""
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
@@ -27,7 +36,9 @@ class Pin:
     def print_self(self):
         if self.closed:
             print("%s:%s:%s:Closed" % (self.name, self.description, self.enabled))
-        else:
+        elif self.closed is None:
+            print("%s:%s:%s:<unknown>" % (self.name, self.description, self.enabled))
+        else :
             print("%s:%s:%s:Open" % (self.name, self.description, self.enabled))
 
     def set_enable(self,enable):
@@ -36,10 +47,11 @@ class Pin:
 
     def set_closed(self,closed):
         if self.closed != closed:
-            if closed:
-                print ("%s:%s is now closed" % ( self.name, self.description ))
-            else:
-                print ("%s:%s is now open" % ( self.name, self.description ))
+            log.debug ("%s:%s has changed to %s" % ( self.name, self.description, closed ))
+            #if closed:
+                #print ("%s:%s is now closed" % ( self.name, self.description ))
+            #else:
+                #print ("%s:%s is now open" % ( self.name, self.description ))
         self.closed=closed
         return self
 
@@ -57,6 +69,7 @@ class Port:
         self.pins = []
         self.REGISTER = register_mapping
         self.PULLUP_MAP = pullup_map # some are done in hardware
+        self.status_byte = None
 
         # create 8 pins which will be defined from main
         for x in range(0,self.MAXPINS):
@@ -96,7 +109,7 @@ class Port:
         #log.debug ("status byte: %s" % (format(self.status_byte,'08b')))
 
     def print_self(self):
-        self.update_pin_enable_state()
+        #self.update_pin_enable_state()
         print ("port %s, status byte:%s" % (self.name, self.status_byte))
         for x in range(0,self.MAXPINS):
             self.pins[x].print_self()
