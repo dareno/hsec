@@ -1,4 +1,9 @@
 #!/usr/bin/python3
+"""
+Not really functional tests but where I was in terms of using unittest. Needs to be completely
+re-written.
+
+"""
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 import unittest

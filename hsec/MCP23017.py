@@ -8,7 +8,6 @@ to make mine more understandable in the context of the other.  Also, I use smbus
 his uses i2c. They really aren't similar at all but I want to make it clear that I was
 reading computerlyrik/MCP23017-RPi-python and following some of those conventions/styles.
 """
-
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 import smbus
@@ -71,6 +70,30 @@ class Port:
         self.PULLUP_MAP = pullup_map # some are done in hardware
         self.status_byte = None
 
+        # The following MCP register settings enable interrupts
+        #      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+        # 00: ff ff 00 00 ff ff 00 00 00 00 42 42 fc ff 00 00
+        # 10: fc ff fc ff 00 00 
+        #
+        # Commentary on some interesting pins
+        # -----------------------------------
+        # 0x00 - IODIR: input on GPIO
+        # 0x04 - GPINTEN: enables interupt-on-change
+        # 0x08 - INTCON: 0 means interrupt if changed from previous value
+        # 0x0a - IOCON: config register, set MIRROR (one GPIO pin for any register
+        #        change) and IOPOL (1 for interrupt == python True)
+        # 0x0c - GPPU: if the port isn't in use, it should be pulled to prevent
+        #        change and thus interrupts. This is an internal 100k ohm resistor
+        #        but I'm using 10K ohm resistors to get more current over the 
+        #        reed sensors, as recommended in some web sites on the topic.
+        #        I only pull the ports that I haven't configured with pull resistors
+        #        in hardware yet. Right now, I have GPA0 and GPA1 so I don't set
+        #        a pull resistor on those, but the others float so they are pulled.
+        # 0x0e - INTF: use this to identify the GP port that caused the interrupt.
+        #        I'm not using this, just checking each GP value. Could use this if 
+        #        I wanted to be more clever.
+
+
         # create 8 pins which will be defined from main
         for x in range(0,self.MAXPINS):
             pin_name = self.name+str(x)
@@ -79,14 +102,17 @@ class Port:
         # setup the pins for reading/input
         self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['IODIR'], 0xFF) # 
 
-        # Activate all internal pullup resistors
-        self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPPU'], self.PULLUP_MAP)
-
         # Activate Interrupt OnChange
         self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPINTEN'], 0xFF)
 
         # Connect Interrupt-Pin with the other port (MIRROR)
-        self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['INTCON'], 0x40)
+        self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['INTCON'], 0x00)
+
+        # Connect Interrupt-Pin with the other port (MIRROR)
+        self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['IOCON'], 0x42)
+
+        # Activate internal pullup resistors for floating pins (designated in map)
+        self.BUS.write_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPPU'], self.PULLUP_MAP)
 
 
     def print_name(self):
@@ -96,7 +122,13 @@ class Port:
         # Read GPIO-Byte from port
         # this line will reset the interrupt
         self.status_byte = self.BUS.read_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPIO'])
-        #log.debug ("status byte: %s" % (format(self.status_byte,'08b')))
+        save_byte = self.status_byte
+        log.debug ("read_byte_data(%s,%s)" % (
+            format(self.DEVICE_ADDRESS,'03x'),
+            format(self.REGISTER['GPIO'],'03x')
+            )
+            )
+        log.debug ("status byte: %s" % (format(self.status_byte,'08b')))
         # 1 means open, 0 means closed
         for x in range(0,self.MAXPINS):
             if ((self.status_byte & 1) == 0):
@@ -106,10 +138,10 @@ class Port:
                 self.pins[x].set_closed(False)
                 #log.debug ("open")
             self.status_byte = self.status_byte >> 1   # shift gpio on port right one bit in prep for next loop
+        self.status_byte = save_byte  # I'd like this there for printing the last read GPIO settings
         #log.debug ("status byte: %s" % (format(self.status_byte,'08b')))
 
     def print_self(self):
-        #self.update_pin_enable_state()
         print ("port %s, status byte:%s" % (self.name, self.status_byte))
         for x in range(0,self.MAXPINS):
             self.pins[x].print_self()
@@ -172,5 +204,6 @@ class MCP23017:
         self.portB.print_self();
 
     def check_for_events(self):
+        # this should probably be refactored. The abstraction isn't clearly correct.
         self.portA.update_pin_enable_state()
         self.portB.update_pin_enable_state()
