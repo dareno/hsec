@@ -8,10 +8,6 @@ import RPi.GPIO as GPIO
 from MCP23017 import MCP23017 #import my custom class
 import channel
 
-# need this so that the GPIO interrupt callback has access to the chip object
-channelToChip = { 29 : None}
-
-
 def configLogging():
     log = logging.getLogger('hsec')
 
@@ -35,23 +31,11 @@ def configLogging():
     # add ch to logger
     log.addHandler(ch)
 
-
-def interrupt_callback(channel):
-    log = logging.getLogger('hsec')
-    log.info("event detected")
-    time.sleep(1) # give it a second
-    channelToChip[29].check_for_events()
-    channelToChip[29].print_self()
-    # I think there's a race condition here where the interrupt may trigger after checking for
-    # events but before exiting. In that case, the interrupt will stay high and there will not
-    # be another rising edge. Would be nice to have an async call here...
-
 def setup():
 
     # setup logging
     log = logging.getLogger('hsec')
     configLogging()
-    
 
     # at this point, I know the hardware config and interrupt pins. I also know the sensor 
     # for each chip pin. I'll need a function for each interrupt ping that will look for
@@ -65,21 +49,10 @@ def setup():
     chip1.portA.pins[0].set_description("Front Door").set_enable(True)
     chip1.portA.pins[1].set_description("Family Room PIR").set_enable(True)
 
-    # print pin usage
-    #chip1.portA.pins[0].print_self()
-    #chip1.portA.pins[1].print_self()
-
-    #chip1.print_self()
-
     # setup interrupt callback function
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(29,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
     #GPIO.add_event_detect(29,GPIO.RISING,callback=interrupt_callback,bouncetime=100)
-
-    # GPIO5.Interrupt => chip1.lookForEvents()
-    # chip1.showConfig() # print the pins with desc and the chip config.
-
-    #channel = Channel()
 
     return chip1
 
