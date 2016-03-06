@@ -6,7 +6,7 @@ import logging
 import time
 import RPi.GPIO as GPIO
 from MCP23017 import MCP23017 #import my custom class
-import channel
+import datetime
 
 def configLogging():
     log = logging.getLogger('hsec')
@@ -43,7 +43,6 @@ def setup():
 
     log.info("starting home security")
     chip1 = MCP23017(1,0x20)
-    #channelToChip[29] = chip1   # save this for interrupt_callback() to use
 
     # define pins
     chip1.portA.pins[0].set_description("Front Door").set_enable(True)
@@ -61,13 +60,20 @@ def loop( chip1 ):
     try:
         # loop through logging calls to see the difference
         # new configurations make, until Ctrl+C is pressed
-        while True:
-            channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=10000)
-            events = chip1.get_events()
 
-            # event or timed out occurred, look at the interrupt to see what happened
+        # initialize channel because GPIO.wait_for_edge seems to return None
+        # until a valid channel is detected and then 0 afterwards.
+        channel=0
+        while True:
+
+            # print any events
+            events = chip1.get_events()
             if len(events)>0:
-                print(events)
+                print(datetime.datetime.now().time()," ", events)
+
+            channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=1)
+            #print("wait_for_edge()=", channel)
+
             
     except KeyboardInterrupt:
         # cleanup

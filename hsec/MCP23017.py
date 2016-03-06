@@ -12,6 +12,8 @@ reading computerlyrik/MCP23017-RPi-python and following some of those convention
 
 import smbus
 import logging
+import time
+
 log = logging.getLogger('hsec')
 
 class Pin:
@@ -129,10 +131,11 @@ class Port:
 
         # Read GPIO-Byte from the register for this port, save locally
         # this line will reset the interrupt
+        #time.sleep(0.25) # give it a 1/4 sec to stop bouncing...
         register = self.BUS.read_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPIO'])
         old_pin_state = self.pin_state # None the first time
         self.pin_state = register 
-        log.debug ("new pin state: %s" % (format(register, '08b')))
+        log.debug ("Port.get_events() new pin state: %s" % (format(register, '08b')))
 
         # for each pin, see if it's closed or open and save state 
         #OPEN=1
@@ -162,39 +165,12 @@ class Port:
 
         return events
 
-    def update_pin_enable_state(self):
-        # Read GPIO-Byte from port
-        # this line will reset the interrupt
-        self.status_byte = self.BUS.read_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPIO'])
-        save_byte = self.status_byte
-        log.debug ("read_byte_data(%s,%s)" % (
-            format(self.DEVICE_ADDRESS,'03x'),
-            format(self.REGISTER['GPIO'],'03x')
-            )
-            )
-        log.debug ("status byte: %s" % (format(self.status_byte,'08b')))
-        # 1 means open, 0 means closed
-        for x in range(0,self.MAXPINS):
-            if ((self.status_byte & 1) == 0):
-                self.pins[x].set_closed(True)
-                #log.debug ("closed")
-            else:
-                self.pins[x].set_closed(False)
-                #log.debug ("open")
-            self.status_byte = self.status_byte >> 1   # shift gpio on port right one bit in prep for next loop
-        self.status_byte = save_byte  # I'd like this there for printing the last read GPIO settings
-        #log.debug ("status byte: %s" % (format(self.status_byte,'08b')))
 
     def print_self(self):
         print ("port %s, status byte:%s" % (self.name, self.status_byte))
         for x in range(0,self.MAXPINS):
             self.pins[x].print_self()
 
-
-
-
-    def read_port(self):
-        pass
 
 class MCP23017:
 
@@ -246,11 +222,6 @@ class MCP23017:
         print ("chip 0x%s:" % format(self.address,'02x'))
         self.portA.print_self();
         self.portB.print_self();
-
-    def check_for_events(self):
-        # this should probably be refactored. The abstraction isn't clearly correct.
-        self.portA.update_pin_enable_state()
-        self.portB.update_pin_enable_state()
 
     def get_events(self):
         """
