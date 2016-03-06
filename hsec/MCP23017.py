@@ -158,7 +158,7 @@ class Port:
                 self.pins[x].set_closed(pin_is_closed)    
 
                 # since it changed, call it an event and add to the list
-                events.append((port_name+str(x),pin_is_closed))
+                events.append([port_name+str(x),pin_is_closed])
 
             # shift gpio on port right one bit in prep for next loop
             register = register >> 1   

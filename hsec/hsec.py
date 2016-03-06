@@ -7,6 +7,7 @@ import time
 import RPi.GPIO as GPIO
 from MCP23017 import MCP23017 #import my custom class
 import datetime
+import commchannel
 
 def configLogging():
     log = logging.getLogger('hsec')
@@ -57,6 +58,8 @@ def setup():
 
 def loop( chip1 ):
     log = logging.getLogger('hsec')
+    comm_channel = commchannel.CommChannel()
+    time.sleep(1) # zmq slow joiner syndrome, should sync instead
     try:
         # loop through logging calls to see the difference
         # new configurations make, until Ctrl+C is pressed
@@ -69,7 +72,10 @@ def loop( chip1 ):
             # print any events
             events = chip1.get_events()
             if len(events)>0:
-                print(datetime.datetime.now().time()," ", events)
+                # share events with those interested
+                #print("we have events: ", len(events))
+                comm_channel.share_events(events)
+            #    print(datetime.datetime.now().time()," ", events)
 
             channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=1)
             #print("wait_for_edge()=", channel)
