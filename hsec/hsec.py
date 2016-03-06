@@ -16,7 +16,7 @@ def configLogging():
         return
 
     # set level of output. DEBUG if in development.
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
 
     # create console handler and set level to debug
     ch = logging.StreamHandler()
@@ -43,7 +43,7 @@ def setup():
 
     log.info("starting home security")
     chip1 = MCP23017(1,0x20)
-    channelToChip[29] = chip1   # save this for interrupt_callback() to use
+    #channelToChip[29] = chip1   # save this for interrupt_callback() to use
 
     # define pins
     chip1.portA.pins[0].set_description("Front Door").set_enable(True)
@@ -62,25 +62,12 @@ def loop( chip1 ):
         # loop through logging calls to see the difference
         # new configurations make, until Ctrl+C is pressed
         while True:
-            channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=5000)
-            if channel is None:
-                print('Timeout occurred')
+            channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=10000)
+            events = chip1.get_events()
 
-                # manual check for interrupt in case missed by wait_for_edge
-                # this doesn't work yet because I haven't changed check_for_events
-                # to return a value
-                #if chip1.check_for_events():
-                    #log.warn('Events found after waiting_for_edge()=%s, race condition?')
-            else:
-                print('Edge detected on channel', channel)
-
-                # this doesn't work yet because I haven't changed check_for_events
-                # to return a value
-                #if not chip1.check_for_events():
-                    #log.warn('Events _not_ found after waiting_for_edge, race condition?')
-
-            # either exited due to an event or timed out, look at the interrupt to see what happened
-            chip1.check_for_events()
+            # event or timed out occurred, look at the interrupt to see what happened
+            if len(events)>0:
+                print(events)
             
     except KeyboardInterrupt:
         # cleanup

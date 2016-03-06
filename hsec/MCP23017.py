@@ -44,14 +44,8 @@ class Pin:
         self.enabled=enable
         return self
 
-    def set_closed(self,closed):
-        if self.closed != closed:
-            log.debug ("%s:%s has changed to %s" % ( self.name, self.description, closed ))
-            #if closed:
-                #print ("%s:%s is now closed" % ( self.name, self.description ))
-            #else:
-                #print ("%s:%s is now open" % ( self.name, self.description ))
-        self.closed=closed
+    def set_closed(self,closed_value):
+        self.closed=closed_value
         return self
 
     def set_description(self,description):
@@ -69,6 +63,7 @@ class Port:
         self.REGISTER = register_mapping
         self.PULLUP_MAP = pullup_map # some are done in hardware
         self.status_byte = None
+        self.pin_state = None
 
         # The following MCP register settings enable interrupts
         #      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
@@ -117,6 +112,55 @@ class Port:
 
     def print_name(self):
         print ("port %s:" % self.name)
+
+    def xor(self, x, y):
+        """
+        Exclusive Or
+        Probably belongs in a utility class
+        Returns True if (x and !y) OR (!x and y)
+        """
+        return ((x and not y) or (not x and y)) == True
+
+    def get_events(self, port_name):
+        """
+        Return a list of new events that occurred. Format is [event,...]
+        event is a list of [(<pin name>,<closed state>),...]
+        """
+
+        # Read GPIO-Byte from the register for this port, save locally
+        # this line will reset the interrupt
+        register = self.BUS.read_byte_data(self.DEVICE_ADDRESS, self.REGISTER['GPIO'])
+        old_pin_state = self.pin_state # None the first time
+        self.pin_state = register 
+        log.debug ("new pin state: %s" % (format(register, '08b')))
+
+        # for each pin, see if it's closed or open and save state 
+        #OPEN=1
+        CLOSED=0
+        events = []
+
+
+        for x in range(0,self.MAXPINS):
+            if old_pin_state is None:
+                pin_changed_value=True
+            else:
+                pin_changed_value = self.xor(register&1, old_pin_state&1)
+                old_pin_state = old_pin_state >> 1   # don't use until next iteration
+
+            if pin_changed_value:
+
+                # set the new value
+                this_pin_value = register & 1
+                pin_is_closed = (this_pin_value==CLOSED)
+                self.pins[x].set_closed(pin_is_closed)    
+
+                # since it changed, call it an event and add to the list
+                events.append((port_name+str(x),pin_is_closed))
+
+            # shift gpio on port right one bit in prep for next loop
+            register = register >> 1   
+
+        return events
 
     def update_pin_enable_state(self):
         # Read GPIO-Byte from port
@@ -207,3 +251,13 @@ class MCP23017:
         # this should probably be refactored. The abstraction isn't clearly correct.
         self.portA.update_pin_enable_state()
         self.portB.update_pin_enable_state()
+
+    def get_events(self):
+        """
+        return a list of new events that occurred. Format is [event,...]
+        event is a list of [<pin name>,<closed state>]
+        """
+        events = []
+        events = self.portA.get_events("GPA") + self.portB.get_events("GPB")
+
+        return events
