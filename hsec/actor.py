@@ -5,6 +5,7 @@ Receive events, decide what to do. Based on zguide.
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 import zmq
+import requests
 
 def main():
     """ main method """
@@ -19,7 +20,11 @@ def main():
     while True:
         # Read envelope with address
         [address, contents] = subscriber.recv_multipart()
-        print("[%s] %s" % (address, contents))
+        #print("[%s] %s" % (address, contents))
+        key = "something"
+        post = "https://maker.ifttt.com/trigger/front_door_opened/with/key/" + key
+        requests.post(post)
+
 
     # We never get here but clean up anyhow
     subscriber.close()

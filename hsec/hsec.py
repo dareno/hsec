@@ -8,6 +8,8 @@ import RPi.GPIO as GPIO
 from MCP23017 import MCP23017 #import my custom class
 import datetime
 import commchannel
+import configparser
+import re
 
 def configLogging():
     log = logging.getLogger('hsec')
@@ -37,12 +39,27 @@ def setup():
     # setup logging
     log = logging.getLogger('hsec')
     configLogging()
+    log.info("starting home security")
 
+    # read config file for options
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    sections = config.sections()
+
+    # get the list of chips to configure from the config file.
+    # probably won't do this now but good to know...
+    regex=re.compile("^(IC\.MCP).*")
+    chips = []
+    for x in [m.group(0) for l in list for m in [regex.search(l)] if m]:
+        chips.append(x)
+
+    ###############################
+    # Configure Hardware
+    ###############################
     # at this point, I know the hardware config and interrupt pins. I also know the sensor 
     # for each chip pin. I'll need a function for each interrupt ping that will look for
     # events and publish them. The event will be open/close on MCP.Pin.description.
 
-    log.info("starting home security")
     chip1 = MCP23017(1,0x20)
 
     # define pins
