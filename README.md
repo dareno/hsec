@@ -27,7 +27,10 @@ To Do
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
 try 1...
-![hardware overview](<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="48">)
+![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="153">
 
 try 2...
-![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="48">
+![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="306">
+
+try 3...
+![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="612">
