@@ -26,4 +26,8 @@ To Do
 * finish config from configfile instead of hard-coded chip config
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
-![hardware overview](https://github.com/dareno/hsec/blob/master/img/hardware.JPG)
+try 1...
+![hardware overview](<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="48">)
+
+try 2...
+![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="48">
