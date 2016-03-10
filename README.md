@@ -6,7 +6,7 @@ The vision is to have a microservice architecture, home security system with no 
 
 The Hardware (humble beginnings...)
 -----------------------------------
-<img src="https://github.com/dareno/hsec/blob/master/img/hardware.png" alt="Raspberry Pi with MCP21017" width="153">
+<img src="https://github.com/dareno/hsec/blob/master/img/hardware.jpg" alt="Raspberry Pi with MCP21017" width="153">
 
 Technology
 ----------
