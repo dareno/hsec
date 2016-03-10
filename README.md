@@ -4,6 +4,10 @@ Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts.
 
 The vision is to have a microservice architecture, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
 
+The Hardware (humble beginnings...)
+-----------------------------------
+![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="153">
+
 Technology
 ----------
 * Raspberry Pi because it's small, low power, and runs linux so I don't have to re-invent the wheel on a microcontroller.
@@ -26,11 +30,4 @@ To Do
 * finish config from configfile instead of hard-coded chip config
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
-try 1...
-![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="153">
 
-try 2...
-![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="306">
-
-try 3...
-![hardware overview]<img src="https://github.com/dareno/hsec/blob/master/img/hardware.JPG" width="612">
