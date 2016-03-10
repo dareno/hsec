@@ -16,7 +16,7 @@ Technology
 * MCP23017 because it's a cheap port expander and there are examples
 * i2c bus for IC to IC communication because there are examples
 * smbus standard over i2c because there are examples
-* RPi.GPIO because I can use it to process interrupts on the MCZP23017
+* RPi.GPIO because I can use it to process interrupts on the MCP23017
 * zmq because I don't need a broker process making this lighter weight for a RPi. 
 
 Architecture
