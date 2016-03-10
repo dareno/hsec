@@ -27,5 +27,5 @@ class CommChannel:
         #print(datetime.datetime.now().time()," ", events_to_send)
         #print(events_to_send.encode('utf-8'))
         self.publisher.send_multipart([b"Events",events_to_send.encode('utf-8')])
-        self.publisher.send_multipart([b"State",b"some state"])
+        #self.publisher.send_multipart([b"State",b"some state"])
 

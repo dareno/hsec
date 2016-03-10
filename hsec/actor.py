@@ -6,6 +6,7 @@ Receive events, decide what to do. Based on zguide.
 
 import zmq
 import requests
+import configparser
 
 def main():
     """ main method """
@@ -17,13 +18,18 @@ def main():
     subscriber.setsockopt(zmq.SUBSCRIBE, b"State")
     subscriber.setsockopt(zmq.SUBSCRIBE, b"Events")
 
+    config = configparser.ConfigParser()
+    config.read('actor.cfg')
+    #key = "something"
+    key=config['maker.ifttt.com']['Key']
+
     while True:
         # Read envelope with address
         [address, contents] = subscriber.recv_multipart()
         #print("[%s] %s" % (address, contents))
-        key = "something"
         post = "https://maker.ifttt.com/trigger/front_door_opened/with/key/" + key
-        requests.post(post)
+        print(post)
+        print(requests.post(post))
 
 
     # We never get here but clean up anyhow

@@ -43,15 +43,20 @@ def setup():
 
     # read config file for options
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('hsec.cfg')
     sections = config.sections()
 
     # get the list of chips to configure from the config file.
     # probably won't do this now but good to know...
     regex=re.compile("^(IC\.MCP).*")
     chips = []
-    for x in [m.group(0) for l in list for m in [regex.search(l)] if m]:
+    for x in [m.group(0) for l in sections for m in [regex.search(l)] if m]:
         chips.append(x)
+
+
+    #log.debug("Found the following chips: ", ', '.join(chips) )
+
+
 
     ###############################
     # Configure Hardware
@@ -74,28 +79,32 @@ def setup():
     return chip1
 
 def loop( chip1 ):
+    """
+    The main loop that continues to check the hardware and share events that occurred.
+    Right now, it handles one chip, but it should handle a list of chips.
+
+    Upon startup, all state will be treated as an event and shared.
+    """
+
     log = logging.getLogger('hsec')
     comm_channel = commchannel.CommChannel()
     time.sleep(1) # zmq slow joiner syndrome, should sync instead
-    try:
-        # loop through logging calls to see the difference
-        # new configurations make, until Ctrl+C is pressed
 
-        # initialize channel because GPIO.wait_for_edge seems to return None
-        # until a valid channel is detected and then 0 afterwards.
-        channel=0
+    try:
+
+        # look for events, share them out
         while True:
 
-            # print any events
+            # look for new events in the hardware, would use channel here 
+            # if there were multiple chips.
             events = chip1.get_events()
-            if len(events)>0:
-                # share events with those interested
-                #print("we have events: ", len(events))
-                comm_channel.share_events(events)
-            #    print(datetime.datetime.now().time()," ", events)
 
+            # share events with those interested
+            if len(events)>0:
+                comm_channel.share_events(events)
+
+            # block until there's another event or timeout occurs
             channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=1)
-            #print("wait_for_edge()=", channel)
 
             
     except KeyboardInterrupt:
