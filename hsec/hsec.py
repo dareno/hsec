@@ -2,6 +2,7 @@
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
+import sys
 import logging
 import time
 import RPi.GPIO as GPIO
@@ -9,8 +10,7 @@ import RPi.GPIO as GPIO
 from bus import Bus
 import datetime
 import commchannel
-import configparser
-import re
+#import re
 
 def configLogging():
     log = logging.getLogger('hsec')
@@ -42,7 +42,6 @@ def get_hardware_config():
     """
 
     # read config file for options
-    #config = configparser.ConfigParser()
     #config.read('hsec.cfg')
     #sections = config.sections()
 
@@ -118,6 +117,14 @@ def setup():
 
     return chips
 
+def clean_exit():
+    print("CTRL-C detected, exiting...")
+    log = logging.getLogger('hsec')
+    GPIO.cleanup()
+    log.info("ending home security")
+    logging.shutdown()
+    sys.exit(0)
+
 def loop( chips ):
     """
     The main loop that continues to check the hardware and share events that occurred.
@@ -130,28 +137,36 @@ def loop( chips ):
     comm_channel = commchannel.CommChannel()
     time.sleep(1) # zmq slow joiner syndrome, should sync instead
 
-    try:
+    # look for events, share them out
+    while True:
+        
+        # look for new events in the hardware, would use channel here 
+        # if there were multiple chips.
 
-        # look for events, share them out
-        while True:
-
-            # look for new events in the hardware, would use channel here 
-            # if there were multiple chips.
-            events = chips[0].get_events()
-
+        # Apparently I need to levels of try...
+        # https://www.raspberrypi.org/forums/viewtopic.php?f=91&t=114581I
+        try:
+            try:
+                #raise KeyboardInterrupt('just a test') 
+                #raise RuntimeError('just a test') 
+                events = chips[0].get_events()
+            except (KeyboardInterrupt, RuntimeError) as e:
+                clean_exit()
+    
             # share events with those interested
             if len(events)>0:
                 comm_channel.share_events(events)
-
+    
             # block until there's another event or timeout occurs
-            channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=1)
-
+            try:
+                #raise RuntimeError('just a test') 
+                #raise KeyboardInterrupt('just a test') 
+                channel = GPIO.wait_for_edge(29, GPIO.RISING, timeout=1)
+            except (KeyboardInterrupt, RuntimeError) as e:
+                clean_exit()
+        except (KeyboardInterrupt, RuntimeError) as e:
+            clean_exit()
             
-    except KeyboardInterrupt:
-        # cleanup
-        GPIO.cleanup()
-        log.info("ending home security")
-        log.shutdown()
 
 if __name__ == '__main__':
 
