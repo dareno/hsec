@@ -87,7 +87,7 @@ def loop( chips ):
     log = logging.getLogger('hsec')
 
     # setup comms to share events to interested parties
-    comm_channel = commchannel.CommChannel()
+    comm_channel = commchannel.SenseChannel()
     time.sleep(1) # zmq slow joiner syndrome, should sync instead
 
     # look for events, share them out

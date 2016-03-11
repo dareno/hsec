@@ -10,6 +10,7 @@ import configparser
 import queue
 from threading import Thread
 import time
+import commchannel
 
 def recv_msg(q, subscriber):
     """
@@ -32,29 +33,20 @@ def main():
     config.read('actor.cfg')
     key=config['maker.ifttt.com']['Key']
 
-    # Prepare our context and publisher
-    context    = zmq.Context()
-    subscriber = context.socket(zmq.SUB)
-    subscriber.connect("tcp://localhost:5563")
-    subscriber.setsockopt(zmq.SUBSCRIBE, b"State")
-    subscriber.setsockopt(zmq.SUBSCRIBE, b"Events")
-
-    q = queue.Queue(maxsize=0)
-    worker = Thread(target=recv_msg, args=(q,subscriber,))
-    worker.setDaemon(True)
-    worker.start()
+    # create object for communication to sensor system
+    comm_channel = commchannel.ActChannel()
 
     try:
         while True:
             # Read envelope and address from queue
-            try:
-                [address, contents] = q.get(False)
-            except queue.Empty:
-                time.sleep(0.1)
-            else:
-                q.task_done()
+            rv = comm_channel.get()
+            if rv is not None:
+                [address, contents] = rv
                 print("[%s] %s" % (address, contents))
-
+            else:
+                time.sleep(0.1)
+            print("doing stuff")
+            time.sleep(1)
             # trigger an event
             #post = "https://maker.ifttt.com/trigger/front_door_opened/with/key/" + key
             #print(post)

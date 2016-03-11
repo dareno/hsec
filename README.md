@@ -23,10 +23,14 @@ Architecture
 ------------
 * hsec.py - look for events on the hardware and share them
 * actor.py - listen for reported events, do something. (e.g. call my phone)
+* commchannel.py - encapsulate messaging technology (e.g. ZeroMQ)
+* MCP23017.py - encapsulate i2c/smbus IC commands 
 
 
 To Do
 -----
+* generalize commchannel classes to send and receive
+* commchannel classes should take arguments for addresses and channels 
 * update main loop to use a distinct thread per device.
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
