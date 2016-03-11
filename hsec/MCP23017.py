@@ -55,6 +55,12 @@ class Pin:
         return self
 
 class Port:
+    """
+    All the MCP operations happen at the port level on an 8-bit register, one bit per port.
+
+    This should work for MCP23008 if we were to use bank1 addressing and portA
+    register addresses.
+    """
 
     def __init__(self, bus, address, name, register_mapping, pullup_map):
         self.MAXPINS = 8
@@ -183,6 +189,8 @@ class MCP23017:
         self.address = address
         log.debug ("creating an MCP23017 chip at bus %s address 0x%s" % (busId, format(address,'02x')))
 
+        # this is "bank 0" addressing, switching to "bank 1" addressing would make it 
+        # easier to support mcp23008.
         self.REGISTER_MAPPING = { 
             'A' : {
                 'IODIR': 0X00,
@@ -232,3 +240,4 @@ class MCP23017:
         events = self.portA.get_events("GPA") + self.portB.get_events("GPB")
 
         return events
+

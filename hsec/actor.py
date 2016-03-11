@@ -29,7 +29,7 @@ def main():
         #print("[%s] %s" % (address, contents))
         post = "https://maker.ifttt.com/trigger/front_door_opened/with/key/" + key
         print(post)
-        print(requests.post(post))
+        #print(requests.post(post))
 
 
     # We never get here but clean up anyhow
