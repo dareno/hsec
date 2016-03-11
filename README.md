@@ -27,7 +27,7 @@ Architecture
 
 To Do
 -----
-* finish config from configfile instead of hard-coded chip config
+* update main loop to use a distinct thread per device.
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
 
