@@ -7,7 +7,7 @@ import logging
 import time
 import RPi.GPIO as GPIO     # for reading RaspPi pins
 from bus import Bus         # used for HW configuration
-import commchannel          # encapsulates communication technology
+import comms.comms as comms # encapsulates communication technology
 
 def configLogging():
     log = logging.getLogger('hsec')
@@ -87,7 +87,8 @@ def loop( chips ):
     log = logging.getLogger('hsec')
 
     # setup comms to share events to interested parties
-    comm_channel = commchannel.SenseChannel()
+    comm_channel = comms.PubChannel("tcp://*:5563")
+    #comm_channel = comms.comms.PubChannel()
     time.sleep(1) # zmq slow joiner syndrome, should sync instead
 
     # look for events, share them out
@@ -106,7 +107,8 @@ def loop( chips ):
     
             # share events with those interested
             if len(events)>0:
-                comm_channel.share_events(events)
+                channel = "events"
+                comm_channel.send(channel, events)
     
             # block until there's another event or timeout occurs
             try:

@@ -4,25 +4,10 @@ Receive events, decide what to do. Based on zguide.
 """
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
-import zmq
-import requests
-import configparser
-import queue
-from threading import Thread
+import requests             # for webhooks
+import configparser         # for reading config
 import time
-import commchannel
-
-def recv_msg(q, subscriber):
-    """
-    Block until messages are received, put them in the queue
-    """
-
-    while True:
-        # get the envelope and message, put it on the shared queue
-        [address, contents] = subscriber.recv_multipart()
-        q.put([address,contents])
-        # unlock the queue for others to read from
-        #q.task_done()
+import comms.comms as comms # for getting a channel to the sensor
 
 
 def main():
@@ -34,7 +19,7 @@ def main():
     key=config['maker.ifttt.com']['Key']
 
     # create object for communication to sensor system
-    comm_channel = commchannel.ActChannel()
+    comm_channel = comms.SubChannel("tcp://localhost:5563", ['events','state'])
 
     try:
         while True:
@@ -43,14 +28,14 @@ def main():
             if rv is not None:
                 [address, contents] = rv
                 print("[%s] %s" % (address, contents))
+                post = "https://maker.ifttt.com/trigger/front_door_opened/with/key/" + key
+                print(post)
+                #print(requests.post(post))
             else:
                 time.sleep(0.1)
             print("doing stuff")
             time.sleep(1)
             # trigger an event
-            #post = "https://maker.ifttt.com/trigger/front_door_opened/with/key/" + key
-            #print(post)
-            #print(requests.post(post))
 
     except KeyboardInterrupt:
         q.join(timeout=1)
