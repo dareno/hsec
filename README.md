@@ -96,7 +96,9 @@ git clone https://github.com/dareno/actor.git
 cd actor/actor/
 git clone https://github.com/dareno/comms.git
 cp actor-example.cfg actor.cfg
-   24  vi actor.cfg
+
+# put ifttt.com make channel password into config file
+vi actor.cfg
 
 # run the hsec code
 ~/actor/actor/actor.py &
