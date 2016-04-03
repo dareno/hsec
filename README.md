@@ -34,4 +34,72 @@ To Do
 * update main loop to use a distinct thread per device.
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
+How To Use
+----------
+#download raspbian minimal to your laptop and write image to sd card : 
+https://www.raspberrypi.org/downloads/raspbian/
+# sudo dd bs=1m if=path_of_your_image.img of=/dev/rdisk2 # DON'T COPY PASTE, MAKE VERIFY TARGET DISK
+
+# boot, able to ssh straight to RPi
+# ssh pi@192.168.1.165 # check your router for IP address
+
+# enlarge file system and enable i2c
+sudo raspi-config
+
+# ssh from pi to pi to create .ssh
+ssh localhost
+
+# setup passwordless login
+scp /Users/david/.ssh/id_rsa.pub pi@192.168.1.165:/home/pi/.ssh/authorized_keys
+
+# add set -o vi to end of profile
+sudo vi /etc/profile 
+
+# update raspbian
+sudo apt-get -y update && sudo apt-get -y upgrade
+
+# install screen
+sudo apt-get install -y screen
+
+# docker
+sudo wget https://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb
+sudo dpkg -i docker-hypriot_1.10.3-1_armhf.deb
+#sudo docker run armhf/debian /bin/echo 'Hello World'
+
+# don't need this, just for troubleshooting...
+# sudo apt-get -y install build-essential libi2c-dev i2c-tools python-dev libffi-dev module-init-tools
+
+# done with Raspbian configuration, now launch the container and configure
+
+# run a shell
+# thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
+sudo docker run --name hsec-container --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
+
+set -o vi
+ls -la /dev/i2c-1 # verify the special file exists...
+apt-get -y update && apt-get -y install vim python3 python3-pip python3-zmq git build-essential libi2c-dev i2c-tools python-dev libffi-dev
+pip3 install RPi.GPIO cffi smbus-cffi
+
+# optional, verify RPi.GPIO
+# python3
+#>>> import sys
+#>>> sys.path.append("/usr/local/lib/python3.4/dist-packages/")
+#>>> import RPi.GPIO as GPIO
+#>>> 
+
+# install the hsec code
+cd
+git clone https://github.com/dareno/hsec.git
+cd hsec/hsec/
+git clone https://github.com/dareno/comms.git
+cd
+git clone https://github.com/dareno/actor.git
+cd actor/actor/
+git clone https://github.com/dareno/comms.git
+cp actor-example.cfg actor.cfg
+   24  vi actor.cfg
+
+# run the hsec code
+~/actor/actor/actor.py &
+~/hsec/hsec/hsec.py &
 
