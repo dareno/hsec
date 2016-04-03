@@ -36,6 +36,7 @@ To Do
 
 How To Use
 ----------
+```
 #download raspbian minimal to your laptop and write image to sd card : 
 https://www.raspberrypi.org/downloads/raspbian/
 # sudo dd bs=1m if=path_of_your_image.img of=/dev/rdisk2 # DON'T COPY PASTE, MAKE VERIFY TARGET DISK
@@ -102,4 +103,4 @@ cp actor-example.cfg actor.cfg
 # run the hsec code
 ~/actor/actor/actor.py &
 ~/hsec/hsec/hsec.py &
-
+```
