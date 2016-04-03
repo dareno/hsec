@@ -29,9 +29,7 @@ Architecture
 
 To Do
 -----
-* generalize commchannel classes to send and receive
-* commchannel classes should take arguments for addresses and channels 
-* update main loop to use a distinct thread per device.
+* update main loop to use a distinct thread per device (only 1 device/MCP today)
 * iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
 
 How To Use
