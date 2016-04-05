@@ -1,8 +1,8 @@
 Description
 -----------
-Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts.
+Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts. This project is implemented with microservices, this is the overview documentation which references the components sited below in the Architecture section. 
 
-The vision is to have a microservice architecture, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
+The vision is to have an easy to maintain, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
 
 The Hardware (humble beginnings...)
 -----------------------------------
@@ -21,8 +21,9 @@ Technology
 
 Architecture
 ------------
-* hsec.py - look for events on the hardware and share them
-* actor.py - listen for reported events, do something. (e.g. call my phone)
+* hsec-trigger - notice sensor events and send to hsec-state
+* hsec-state - receive sensor and control events (e.g. "arm the system"), update state and send changes to hsec-alert
+* hsec-alert - route state changes through all the appropriate channels (e.g. iCloud, house klaxon)
 * commchannel.py - encapsulate messaging technology (e.g. ZeroMQ)
 * MCP23017.py - encapsulate i2c/smbus IC commands 
 
@@ -88,19 +89,24 @@ pip3 install RPi.GPIO cffi smbus-cffi
 
 # install the hsec code
 cd
-git clone https://github.com/dareno/hsec.git
-cd hsec/hsec/
-git clone https://github.com/dareno/comms.git
+git clone git@github.com:dareno/hsec-trigger.git
+cd hsec-trigger/hsec-trigger/
+git clone git@github.com:dareno/comms.git
 cd
-git clone https://github.com/dareno/actor.git
-cd actor/actor/
-git clone https://github.com/dareno/comms.git
-cp actor-example.cfg actor.cfg
+git clone git@github.com:dareno/hsec-state.git
+cd hsec-state/hsec-state/
+git clone git@github.com:dareno/comms.git
+cd
+git clone git@github.com:dareno/hsec-alert.git
+cd hsec-alert/hsec-alert/
+git clone git@github.com:dareno/comms.git
+cp hsec-state-alert.cfg hsec-alert.cfg
 
 # put ifttt.com make channel password into config file
-vi actor.cfg
+vi hsec-alert.cfg
 
 # run the hsec code
-~/actor/actor/actor.py &
-~/hsec/hsec/hsec.py &
+(cd ~/hsec-alert/hsec-alert/; ./hsec-alert.py) &
+(cd ~/hsec-state/hsec-state/; ./hsec-state.py) &
+(cd ~/hsec-trigger/hsec-trigger/; ./hsec-trigger.py) &
 ```
