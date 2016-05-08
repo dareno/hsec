@@ -12,13 +12,15 @@ Here's an overview shot in an amazing cardboard case...
 
 ### Port Expander sub-module
 Schematic and board exports for just the port expander module. There's a connector for 3.3V, GND, I2C and interrupt wires. These will connect to the appropriate RPi pins.
-
 ![Port Expander Schematic](https://github.com/dareno/hsec/blob/master/img/port expander submodle schematic.png "Port Expander Schematic")
 
 I drew the blue "bottom" traces with the intent that I would use the through-hole, bare-wire leads to make those connections. The red "top" traces will be on the bottom too but with insulated wire to cross the bare, blue wires. J1 through J4 have extra room around them so that you can use any screw terminals. JP1 is a shrouded and keyed connector to prevent misconfiguration, but I left pin 10 free in case it got plugged in backwards somehow (don't want power applied to an unsuspecting pin).
 
 ![Port Expander Board](https://github.com/dareno/hsec/blob/master/img/port expander submodle board.png "Port Expander Board")
 
+### Installed
+Now installed in a case with sensors fed to the port expander.
+![Installed](https://github.com/dareno/hsec/blob/master/img/overview.jpg "Installed")
 
 
 Technology
