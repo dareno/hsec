@@ -91,11 +91,12 @@ sudo systemctl enable docker # enable auto start of daemon
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
 # sudo docker run --name hsec-container --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
 sudo docker run -d -p 5000:5000 --name hsec2 --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
+sudo docker attach <container ID>
 
 set -o vi
 ls -la /dev/i2c-1 # verify the special file exists...
 apt-get -y update && apt-get -y install vim python3 python3-pip python3-zmq git build-essential libi2c-dev i2c-tools python-dev libffi-dev
-pip3 install RPi.GPIO cffi smbus-cffi
+pip3 install RPi.GPIO cffi smbus-cffi Flask
 
 # optional, verify RPi.GPIO
 # python3
@@ -103,6 +104,9 @@ pip3 install RPi.GPIO cffi smbus-cffi
 #>>> sys.path.append("/usr/local/lib/python3.4/dist-packages/")
 #>>> import RPi.GPIO as GPIO
 #>>> 
+
+# paste github public key...this probably needs to change for public access...not sure right procedure
+vi ~/.ssh/id_rsa
 
 # install the hsec code
 cd
@@ -118,9 +122,21 @@ git clone git@github.com:dareno/hsec-alert.git
 cd hsec-alert/hsec-alert/
 git clone git@github.com:dareno/comms.git
 cp hsec-state-alert.cfg hsec-alert.cfg
+cd
+git clone git@github.com:dareno/hsec-webui.git
+cd hsec-webui/hsec-webui/
+git clone git@github.com:dareno/comms.git
 
 # put ifttt.com make channel password into config file
 vi hsec-alert.cfg
+
+# create ~/.vimrc
+syntax on
+filetype indent plugin on
+set modeline
+
+# setup git in this container for development
+git config --global user.email "you@example.com"
 
 # run the hsec code
 (cd ~/hsec-alert/hsec-alert/; ./hsec-alert.py) &
