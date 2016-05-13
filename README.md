@@ -89,7 +89,8 @@ sudo systemctl enable docker # enable auto start of daemon
 
 # run a shell
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
-sudo docker run --name hsec-container --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
+# sudo docker run --name hsec-container --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
+sudo docker run -d -p 5000:5000 --name hsec2 --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
 
 set -o vi
 ls -la /dev/i2c-1 # verify the special file exists...
