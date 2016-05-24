@@ -76,7 +76,7 @@ sudo apt-get -y update && sudo apt-get -y upgrade
 # install screen
 sudo apt-get install -y screen
 
-# docker
+# setup docker host
 sudo wget https://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb
 sudo dpkg -i docker-hypriot_1.10.3-1_armhf.deb
 sudo systemctl enable docker # enable auto start of daemon
@@ -90,9 +90,24 @@ sudo systemctl enable docker # enable auto start of daemon
 # run a shell
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
 # sudo docker run --name hsec-container --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
-sudo docker run -d -p 5000:5000 --name hsec2 --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
-sudo docker attach <container ID>
+#sudo docker run -d -p 5000:5000 --name hsec2 --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
+#sudo docker attach <container ID>
 
+# create an isolated docker network for peer-to-peer communication
+# containers that join this network can find each other via DNS
+sudo docker network create --driver bridge isolated_nw
+
+# build the containers from the dockerfiles
+#git clone hsec dockerfiles
+sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trig -f trig.dockerfile .
+
+# run the containers attached interactively, with psuedo-terminals for debug. Trigger needs special OS access
+sudo docker run -it --net isolated_nw --name alert1 --hostname alert1 alert
+sudo docker run -it --net isolated_nw --name state1 --hostname state1 state
+sudo docker run -it --net isolated_nw --name trig1 --hostname trig1 --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules trig
+
+
+# LEGACY COMMANDS, REMOVE FROM README...
 set -o vi
 ls -la /dev/i2c-1 # verify the special file exists...
 apt-get -y update && apt-get -y install vim python3 python3-pip python3-zmq git build-essential libi2c-dev i2c-tools python-dev libffi-dev
@@ -138,8 +153,4 @@ set modeline
 # setup git in this container for development
 git config --global user.email "you@example.com"
 
-# run the hsec code
-(cd ~/hsec-alert/hsec-alert/; ./hsec-alert.py) &
-(cd ~/hsec-state/hsec-state/; ./hsec-state.py) &
-(cd ~/hsec-trigger/hsec-trigger/; ./hsec-trigger.py) &
 ```
