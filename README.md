@@ -73,8 +73,15 @@ sudo vi /etc/profile
 # update raspbian
 sudo apt-get -y update && sudo apt-get -y upgrade
 
-# install screen
-sudo apt-get install -y screen
+# install screen and dev tools
+sudo apt-get install -y screen \
+  git \
+  python3 \
+  python3-pip \
+  python3-zmq \
+  python-dev \
+  vim 
+
 
 # setup docker host
 sudo wget https://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb
