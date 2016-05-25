@@ -51,6 +51,10 @@ To Do
 How To Use
 ----------
 ```
+####################
+## RPi config
+####################
+
 #download raspbian minimal to your laptop and write image to sd card : 
 https://www.raspberrypi.org/downloads/raspbian/
 # sudo dd bs=1m if=path_of_your_image.img of=/dev/rdisk2 # DON'T COPY/PASTE, VERIFY TARGET DISK
@@ -92,29 +96,39 @@ sudo systemctl enable docker # enable auto start of daemon
 # don't need this, just for troubleshooting...
 # sudo apt-get -y install build-essential libi2c-dev i2c-tools python-dev libffi-dev module-init-tools
 
+# get source for inclusion in docker containers
+git config --global user.name  'dareno'
+git config --global user.email 'dcreno@gmail.com'
+git clone git@github.com:dareno/comms.git
+git clone git@github.com:dareno/hsec-trigger.git 
+git clone git@github.com:dareno/hsec-state.git
+git clone git@github.com:dareno/hsec-alert.git
+git clone git@github.com:dareno/hsec-webui.git
+
 # done with Raspbian configuration, now launch the container and configure
 
-# run a shell
-# thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
-# sudo docker run --name hsec-container --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
-#sudo docker run -d -p 5000:5000 --name hsec2 --privileged --cap-add=ALL -it -v /dev:/dev -v /lib/modules:/lib/modules armhf/debian /bin/bash
-#sudo docker attach <container ID>
-
+####################
+## Docker config
+####################
 # create an isolated docker network for peer-to-peer communication
 # containers that join this network can find each other via DNS
 sudo docker network create --driver bridge isolated_nw
 
 # build the containers from the dockerfiles
-#git clone hsec dockerfiles
-sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trig -f trig.dockerfile .
+sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile .
 
 # run the containers attached interactively, with psuedo-terminals for debug. Trigger needs special OS access
-sudo docker run -it --net isolated_nw --name alert1 --hostname alert1 alert
-sudo docker run -it --net isolated_nw --name state1 --hostname state1 state
-sudo docker run -it --net isolated_nw --name trig1 --hostname trig1 --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules trig
+# thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
+APP="trigger" bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules ${APP}'
+APP="alert"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
 
+# TODO: add better commands to run webui and state
+# docker run webui
+# sudo docker run -it --net isolated_nw --name state1 --hostname state1 state
 
-# LEGACY COMMANDS, REMOVE FROM README...
+############################################################
+## LEGACY COMMANDS, REMOVE FROM README...
+############################################################
 set -o vi
 ls -la /dev/i2c-1 # verify the special file exists...
 apt-get -y update && apt-get -y install vim python3 python3-pip python3-zmq git build-essential libi2c-dev i2c-tools python-dev libffi-dev
