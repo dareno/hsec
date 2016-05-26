@@ -39,6 +39,7 @@ Architecture
 * hsec-trigger - notice sensor events and send to hsec-state
 * hsec-state - receive sensor and control events (e.g. "arm the system"), update state and send changes to hsec-alert
 * hsec-alert - route state changes through all the appropriate channels (e.g. iCloud, house klaxon)
+* hsec-webui - host Flask based web app for control (e.g. arm/disarm)
 * commchannel.py - encapsulate messaging technology (e.g. ZeroMQ)
 * MCP23017.py - encapsulate i2c/smbus IC commands 
 
@@ -46,7 +47,7 @@ Architecture
 To Do
 -----
 * update main loop to use a distinct thread per device (only 1 device/MCP today)
-* iPhone app to add reporting and state events (e.g. arm motion detectors, arm windows, arm doors)
+* change hardcoded microservice names to env variables
 
 How To Use
 ----------
@@ -77,15 +78,8 @@ sudo vi /etc/profile
 # update raspbian
 sudo apt-get -y update && sudo apt-get -y upgrade
 
-# install screen and dev tools
-sudo apt-get install -y screen \
-  git \
-  python3 \
-  python3-pip \
-  python3-zmq \
-  python-dev \
-  vim 
-
+# install screen 
+sudo apt-get install -y screen 
 
 # setup docker host
 sudo wget https://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb
@@ -96,14 +90,6 @@ sudo systemctl enable docker # enable auto start of daemon
 # don't need this, just for troubleshooting...
 # sudo apt-get -y install build-essential libi2c-dev i2c-tools python-dev libffi-dev module-init-tools
 
-# get source for inclusion in docker containers
-git config --global user.name  'dareno'
-git config --global user.email 'dcreno@gmail.com'
-git clone git@github.com:dareno/comms.git
-git clone git@github.com:dareno/hsec-trigger.git 
-git clone git@github.com:dareno/hsec-state.git
-git clone git@github.com:dareno/hsec-alert.git
-git clone git@github.com:dareno/hsec-webui.git
 
 # done with Raspbian configuration, now launch the container and configure
 
@@ -117,8 +103,27 @@ sudo docker network create --driver bridge isolated_nw
 # build the containers from the dockerfiles
 sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile .
 
-# run the containers attached interactively, with psuedo-terminals for debug. 
+# run the dev container, attached interactively with psuedo-terminals for debug. 
 
+# dev container with vim and other tools
+APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
+
+
+#######################
+## From dev container
+#######################
+# get source for inclusion in docker containers
+git config --global user.name  'dareno'
+git config --global user.email 'dcreno@gmail.com'
+git clone git@github.com:dareno/comms.git
+git clone git@github.com:dareno/hsec-trigger.git 
+git clone git@github.com:dareno/hsec-state.git
+git clone git@github.com:dareno/hsec-alert.git
+git clone git@github.com:dareno/hsec-webui.git
+
+####################
+## From docker host
+####################
 # Trigger needs special OS access
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
 APP="trigger" bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules ${APP}'
@@ -131,10 +136,6 @@ APP="state"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${
 
 # webui listens on port 5000: 
 APP="webui"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 -p 5000:5000 ${APP}'
-
-# dev container with vim and other tools
-APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
-
 
 ############################################################
 ## Notes...
