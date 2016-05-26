@@ -112,6 +112,15 @@ APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${AP
 #######################
 ## From dev container
 #######################
+
+# setup dev environment
+cat <<EOF > .vimrc
+syntax on
+filetype indent plugin on
+set modeline
+EOF
+
+
 # get source for inclusion in docker containers
 git config --global user.name  'dareno'
 git config --global user.email 'dcreno@gmail.com'
