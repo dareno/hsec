@@ -100,14 +100,41 @@ sudo systemctl enable docker # enable auto start of daemon
 # containers that join this network can find each other via DNS
 sudo docker network create --driver bridge isolated_nw
 
-# build the containers from the dockerfiles
-sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile .
+# create dev container from latest git file or use this:
+cat <<EOF > dev.dockerfile
+FROM armhf/debian
+
+MAINTAINER David Reno
+
+RUN apt-get update && apt-get -y install \
+        build-essential \
+        git \
+        python-dev \
+        python3 \
+        python3-pip \
+        python3-zmq \
+        vim
+
+WORKDIR /
+
+COPY .ssh/authorized_keys /root/.ssh/authorized_keys
+COPY .ssh/known_hosts     /root/.ssh/known_hosts
+COPY .ssh/id_rsa          /root/.ssh/id_rsa
+
+ENV app dev
+ENV PYTHONPATH $PYTHONPATH:/
+
+ENTRYPOINT ["/bin/bash"]
+EOF
+
+sudo docker build -t dev -f dev.dockerfile
+
+
 
 # run the dev container, attached interactively with psuedo-terminals for debug. 
 
 # dev container with vim and other tools
-APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
-
+APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi:/home/pi/dev --name ${APP}1 --hostname ${APP}1 ${APP}'
 
 #######################
 ## From dev container
@@ -120,10 +147,10 @@ filetype indent plugin on
 set modeline
 EOF
 
-
 # get source for inclusion in docker containers
 git config --global user.name  'dareno'
 git config --global user.email 'dcreno@gmail.com'
+git clone git@github.com:dareno/hsec.git 
 git clone git@github.com:dareno/comms.git
 git clone git@github.com:dareno/hsec-trigger.git 
 git clone git@github.com:dareno/hsec-state.git
@@ -133,6 +160,9 @@ git clone git@github.com:dareno/hsec-webui.git
 ####################
 ## From docker host
 ####################
+# build the containers from the dockerfiles
+sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile . 
+
 # Trigger needs special OS access
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
 APP="trigger" bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules ${APP}'
@@ -156,8 +186,4 @@ APP="webui"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${
 #>>> import RPi.GPIO as GPIO
 #>>> 
 
-# create ~/.vimrc
-syntax on
-filetype indent plugin on
-set modeline
 ```
