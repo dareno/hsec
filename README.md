@@ -117,23 +117,28 @@ sudo docker network create --driver bridge isolated_nw
 # build the containers from the dockerfiles
 sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile .
 
-# run the containers attached interactively, with psuedo-terminals for debug. Trigger needs special OS access
+# run the containers attached interactively, with psuedo-terminals for debug. 
+
+# Trigger needs special OS access
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
 APP="trigger" bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules ${APP}'
+
+# alert
 APP="alert"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
 
-# TODO: add better commands to run webui and state
-# docker run webui
-# sudo docker run -it --net isolated_nw --name state1 --hostname state1 state
+# state
+APP="state"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
+
+# webui listens on port 5000: 
+APP="webui"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 -p 5000:5000 ${APP}'
+
+# dev container with vim and other tools
+APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi/hsec-${APP}:/hsec-${APP} --name ${APP}1 --hostname ${APP}1 ${APP}'
+
 
 ############################################################
-## LEGACY COMMANDS, REMOVE FROM README...
+## Notes...
 ############################################################
-set -o vi
-ls -la /dev/i2c-1 # verify the special file exists...
-apt-get -y update && apt-get -y install vim python3 python3-pip python3-zmq git build-essential libi2c-dev i2c-tools python-dev libffi-dev
-pip3 install RPi.GPIO cffi smbus-cffi Flask
-
 # optional, verify RPi.GPIO
 # python3
 #>>> import sys
@@ -141,37 +146,8 @@ pip3 install RPi.GPIO cffi smbus-cffi Flask
 #>>> import RPi.GPIO as GPIO
 #>>> 
 
-# paste github public key...this probably needs to change for public access...not sure right procedure
-vi ~/.ssh/id_rsa
-
-# install the hsec code
-cd
-git clone git@github.com:dareno/hsec-trigger.git
-cd hsec-trigger/hsec-trigger/
-git clone git@github.com:dareno/comms.git
-cd
-git clone git@github.com:dareno/hsec-state.git
-cd hsec-state/hsec-state/
-git clone git@github.com:dareno/comms.git
-cd
-git clone git@github.com:dareno/hsec-alert.git
-cd hsec-alert/hsec-alert/
-git clone git@github.com:dareno/comms.git
-cp hsec-state-alert.cfg hsec-alert.cfg
-cd
-git clone git@github.com:dareno/hsec-webui.git
-cd hsec-webui/hsec-webui/
-git clone git@github.com:dareno/comms.git
-
-# put ifttt.com make channel password into config file
-vi hsec-alert.cfg
-
 # create ~/.vimrc
 syntax on
 filetype indent plugin on
 set modeline
-
-# setup git in this container for development
-git config --global user.email "you@example.com"
-
 ```
