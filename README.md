@@ -121,19 +121,15 @@ COPY .ssh/authorized_keys /root/.ssh/authorized_keys
 COPY .ssh/known_hosts     /root/.ssh/known_hosts
 COPY .ssh/id_rsa          /root/.ssh/id_rsa
 
-ENV app dev
 ENV PYTHONPATH $PYTHONPATH:/
+ENV app dev  # maybe don't need this line...
 
 ENTRYPOINT ["/bin/bash"]
 EOF
 
 sudo docker build -t dev -f dev.dockerfile
 
-
-
 # run the dev container, attached interactively with psuedo-terminals for debug. 
-
-# dev container with vim and other tools
 APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi:/home/pi/dev --name ${APP}1 --hostname ${APP}1 ${APP}'
 
 #######################
@@ -147,15 +143,13 @@ filetype indent plugin on
 set modeline
 EOF
 
-# get source for inclusion in docker containers
-git config --global user.name  'dareno'
-git config --global user.email 'dcreno@gmail.com'
-git clone git@github.com:dareno/hsec.git 
-git clone git@github.com:dareno/comms.git
-git clone git@github.com:dareno/hsec-trigger.git 
-git clone git@github.com:dareno/hsec-state.git
-git clone git@github.com:dareno/hsec-alert.git
-git clone git@github.com:dareno/hsec-webui.git
+#### Get your source code onto the shared volume, only need to do this once.
+#git clone git@github.com:dareno/hsec.git 
+#git clone git@github.com:dareno/comms.git
+#git clone git@github.com:dareno/hsec-trigger.git 
+#git clone git@github.com:dareno/hsec-state.git
+#git clone git@github.com:dareno/hsec-alert.git
+#git clone git@github.com:dareno/hsec-webui.git
 
 ####################
 ## From docker host
