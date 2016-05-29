@@ -121,10 +121,10 @@ ENV app dev
 RUN groupadd -r ${app} && useradd -rm -g ${app} ${app}
 RUN echo "set editing-mode vi" >> /etc/inputrc
 USER ${app}
-COPY .ssh/authorized_keys /root/.ssh/authorized_keys
-COPY .ssh/known_hosts     /root/.ssh/known_hosts
-COPY .ssh/id_rsa          /root/.ssh/id_rsa
-COPY hsec/vimrc           /root/.vimrc
+COPY .ssh/authorized_keys /${app}/.ssh/authorized_keys
+COPY .ssh/known_hosts     /${app}/.ssh/known_hosts
+COPY .ssh/id_rsa          /${app}/.ssh/id_rsa
+COPY hsec/vimrc           /${app}/.vimrc
 
 RUN git config --global user.name  'dareno'
 RUN git config --global user.email 'dcreno@gmail.com'
