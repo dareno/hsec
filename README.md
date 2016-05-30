@@ -107,22 +107,31 @@ FROM armhf/debian
 MAINTAINER David Reno
 
 RUN apt-get update && apt-get -y install \
-        build-essential \
-        git \
-        python-dev \
-        python3 \
-        python3-pip \
-        python3-zmq \
-        vim
+	build-essential \
+	git \
+	python-dev \
+	python3 \
+	python3-pip \
+	python3-zmq \
+	vim 
 
 WORKDIR /
 
-COPY .ssh/authorized_keys /root/.ssh/authorized_keys
-COPY .ssh/known_hosts     /root/.ssh/known_hosts
-COPY .ssh/id_rsa          /root/.ssh/id_rsa
+ENV app dev
+RUN groupadd -r ${app} && useradd -rm -g ${app} ${app}
+RUN echo "set editing-mode vi" >> /etc/inputrc
+USER ${app}
+COPY .ssh/authorized_keys /${app}/.ssh/authorized_keys
+COPY .ssh/known_hosts     /${app}/.ssh/known_hosts
+COPY .ssh/id_rsa          /${app}/.ssh/id_rsa
+COPY hsec/vimrc           /${app}/.vimrc
+
+RUN git config --global user.name  'dareno'
+RUN git config --global user.email 'dcreno@gmail.com'
+
+RUN echo "set -o vi" >> /home/${app}/.bashrc
 
 ENV PYTHONPATH $PYTHONPATH:/
-ENV app dev  # maybe don't need this line...
 
 ENTRYPOINT ["/bin/bash"]
 EOF
@@ -154,6 +163,17 @@ EOF
 ####################
 ## From docker host
 ####################
+
+# create ssl cert and keys for web server
+PASSPHRASE="i don't care if hackers decrypt my previous messages"
+SSLFILE="hsec"
+openssl genrsa -passout "pass:${PASSPHRASE}" -des3 -out ${SSLFILE}.key 1024
+openssl req -subj "/C=US/ST=Pennsylvania/L=West Chester/O=Security/CN=renos.asuscomm.com" -passin "pass:${PASSPHRASE}" -new -key ${SSLFILE}.key -out ${SSLFILE}.csr
+openssl req -in ${SSLFILE}.csr -noout -text
+openssl x509 -passin "pass:${PASSPHRASE}" -req -days 365 -in ${SSLFILE}.csr -signkey ${SSLFILE}.key -out ${SSLFILE}.crt
+
+
+
 # build the containers from the dockerfiles
 sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile . 
 
