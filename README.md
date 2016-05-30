@@ -163,6 +163,17 @@ EOF
 ####################
 ## From docker host
 ####################
+
+# create ssl cert and keys for web server
+PASSPHRASE="i don't care if hackers decrypt my previous messages"
+SSLFILE="hsec"
+openssl genrsa -passout "pass:${PASSPHRASE}" -des3 -out ${SSLFILE}.key 1024
+openssl req -subj "/C=US/ST=Pennsylvania/L=West Chester/O=Security/CN=renos.asuscomm.com" -passin "pass:${PASSPHRASE}" -new -key ${SSLFILE}.key -out ${SSLFILE}.csr
+openssl req -in ${SSLFILE}.csr -noout -text
+openssl x509 -passin "pass:${PASSPHRASE}" -req -days 365 -in ${SSLFILE}.csr -signkey ${SSLFILE}.key -out ${SSLFILE}.crt
+
+
+
 # build the containers from the dockerfiles
 sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile . 
 
