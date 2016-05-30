@@ -96,6 +96,10 @@ sudo systemctl enable docker # enable auto start of daemon
 ####################
 ## Docker config
 ####################
+# Create users for docker dev containers. Match this user/group id to dockerfile
+sudo useradd -rm -u 2000 -g ${app} ${app}
+sudo groupadd -g 2000 -r ${app}
+
 # create an isolated docker network for peer-to-peer communication
 # containers that join this network can find each other via DNS
 sudo docker network create --driver bridge isolated_nw

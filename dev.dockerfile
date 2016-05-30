@@ -26,6 +26,7 @@ COPY hsec.key             /home/${app}/
 RUN echo "set -o vi" >>   /home/${app}/.bashrc
 RUN chown -R ${ID}:${ID}  /home/${app}
 USER ${app}
+WORKDIR /home/${app}
 
 RUN git config --global user.name  'dareno'
 RUN git config --global user.email 'dcreno@gmail.com'
