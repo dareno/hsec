@@ -140,7 +140,7 @@ ENV PYTHONPATH $PYTHONPATH:/
 ENTRYPOINT ["/bin/bash"]
 EOF
 
-sudo docker build -t dev -f dev.dockerfile
+sudo docker build -t dev -f dev.dockerfile .
 
 # run the dev container, attached interactively with psuedo-terminals for debug. 
 APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi:/home/pi/dev --name ${APP}1 --hostname ${APP}1 ${APP}'
