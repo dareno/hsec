@@ -175,7 +175,8 @@ openssl req -subj "/C=US/ST=Pennsylvania/L=West Chester/O=Security/CN=renos.asus
 #openssl req -in ${SSLFILE}.csr -noout -text
 openssl x509 -req -days 365 -in ${SSLFILE}.csr -signkey ${SSLFILE}.key -out ${SSLFILE}.crt
 
-
+# cleanup if necessary
+sudo sh -c "docker rm \$(docker ps -a -q); docker rmi \$(docker images -q)"
 
 # build the containers from the dockerfiles
 sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile . 
