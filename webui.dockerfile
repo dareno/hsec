@@ -18,7 +18,8 @@ ENV app hsec-webui
 ENV PYTHONPATH $PYTHONPATH:/
 
 RUN pip3 install \
-	Flask 
+	Flask \
+	flask_httpauth
 
 ENV app hsec-webui
 ENV PYTHONPATH $PYTHONPATH:/
