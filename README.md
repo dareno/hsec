@@ -180,7 +180,7 @@ openssl x509 -req -days 365 -in ${SSLFILE}.csr -signkey ${SSLFILE}.key -out ${SS
 sudo sh -c "docker rm \$(docker ps -a -q); docker rmi \$(docker images -q)"
 
 # build the containers from the dockerfiles
-sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile . 
+sudo docker build -t alert -f hsec/alert.dockerfile . && sudo docker build -t state -f hsec/state.dockerfile . && sudo docker build -t trigger -f hsec/trig.dockerfile . && sudo docker build -t webui -f hsec/webui.dockerfile . 
 
 # Trigger needs special OS access
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
