@@ -140,7 +140,8 @@ ENV PYTHONPATH $PYTHONPATH:/
 ENTRYPOINT ["/bin/bash"]
 EOF
 
-sudo docker build -t dev -f dev.dockerfile
+cd ~
+sudo docker build -t dev -f hsec/dev.dockerfile .
 
 # run the dev container, attached interactively with psuedo-terminals for debug. 
 APP="dev"   bash -c 'sudo docker run -it --net isolated_nw -v /home/pi:/home/pi/dev --name ${APP}1 --hostname ${APP}1 ${APP}'
@@ -175,10 +176,11 @@ openssl req -subj "/C=US/ST=Pennsylvania/L=West Chester/O=Security/CN=renos.asus
 #openssl req -in ${SSLFILE}.csr -noout -text
 openssl x509 -req -days 365 -in ${SSLFILE}.csr -signkey ${SSLFILE}.key -out ${SSLFILE}.crt
 
-
+# cleanup if necessary
+sudo sh -c "docker rm \$(docker ps -a -q); docker rmi \$(docker images -q)"
 
 # build the containers from the dockerfiles
-sudo docker build -t alert -f alert.dockerfile . && sudo docker build -t state -f state.dockerfile . && sudo docker build -t trigger -f trig.dockerfile . && sudo docker build -t webui -f webui.dockerfile . 
+sudo docker build -t alert -f hsec/alert.dockerfile . && sudo docker build -t state -f hsec/state.dockerfile . && sudo docker build -t trigger -f hsec/trig.dockerfile . && sudo docker build -t webui -f hsec/webui.dockerfile . 
 
 # Trigger needs special OS access
 # thanks dummdida... http://dummdida.tumblr.com/post/117157045170/modprobe-in-a-docker-container
