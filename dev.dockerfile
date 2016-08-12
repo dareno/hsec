@@ -5,6 +5,7 @@ MAINTAINER David Reno
 RUN apt-get update && apt-get -y install \
 	build-essential \
 	git \
+	man-db \
 	python-dev \
 	python3 \
 	python3-pip \
