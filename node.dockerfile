@@ -20,8 +20,8 @@ RUN apt-get update && apt-get -y install \
 WORKDIR /
 ADD comms comms
 ENV app hsec-node
-ADD ${app} ${app}
-WORKDIR /${app}/${app}
+#ADD ${app} ${app}
+#WORKDIR /${app}/${app}
 
 # Upgrade node and npm to latest version
 #RUN     npm cache clean
