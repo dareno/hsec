@@ -22,7 +22,6 @@ I drew the blue "bottom" traces with the intent that I would use the through-hol
 Now installed in a case with sensors fed to the port expander.
 ![Installed](https://github.com/dareno/hsec/blob/master/img/overview.jpg "Installed")
 
-
 Technology
 ----------
 * Raspberry Pi because it's small, low power, and runs linux so I don't have to re-invent the wheel on a microcontroller.
@@ -34,15 +33,14 @@ Technology
 * RPi.GPIO because I can use it to process interrupts on the MCP23017
 * zmq because I don't need a broker process making this lighter weight for a RPi. 
 
-Architecture
-------------
+Micro Services
+--------------
 * hsec-trigger - notice sensor events and send to hsec-state
 * hsec-state - receive sensor and control events (e.g. "arm the system"), update state and send changes to hsec-alert
 * hsec-alert - route state changes through all the appropriate channels (e.g. iCloud, house klaxon)
-* hsec-webui - host Flask based web app for control (e.g. arm/disarm)
+* hsec-webui - node.js (express.js) based web app for control (e.g. arm/disarm)
 * commchannel.py - encapsulate messaging technology (e.g. ZeroMQ)
 * MCP23017.py - encapsulate i2c/smbus IC commands 
-
 
 To Do
 -----
@@ -81,11 +79,17 @@ sudo apt-get -y update && sudo apt-get -y upgrade
 # install screen 
 sudo apt-get install -y screen 
 
+## Hypriot packaging
 # setup docker host
-sudo wget https://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb
-sudo dpkg -i docker-hypriot_1.10.3-1_armhf.deb
-sudo systemctl enable docker # enable auto start of daemon
-#sudo docker run armhf/debian /bin/echo 'Hello World'
+# sudo wget https://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb
+# sudo dpkg -i docker-hypriot_1.10.3-1_armhf.deb
+# sudo systemctl enable docker # enable auto start of daemon
+# sudo docker run armhf/debian /bin/echo 'Hello World'
+
+## Docker packaging
+curl -fsSL get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker # allow pi user to run docker commands after logout and login
 
 # don't need this, just for troubleshooting...
 # sudo apt-get -y install build-essential libi2c-dev i2c-tools python-dev libffi-dev module-init-tools
