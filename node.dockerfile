@@ -37,7 +37,7 @@ ENV app hsec-node
 RUN	npm cache clean
 RUN	npm init --y
 RUN	npm install basic-auth
-RUN	npm install zmq
+#RUN	npm install zmq
 
 
 #ENTRYPOINT ["/${app}/${app}/${app}.py"]
