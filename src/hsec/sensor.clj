@@ -1,9 +1,8 @@
 (ns hsec.sensor
-  (:gen-class)
   (:require [dvlopt.linux.i2c       :as i2c]
             [dvlopt.linux.i2c.smbus :as smbus]
-            [hsec.mcp23017          :as mcp23017])
-  (:import java.lang.AutoCloseable))
+            [hsec.mcp23017          :as mcp23017]))
+  ;; (:import java.lang.AutoCloseable))
 
 (defn setup-chip
   "Given a bus path and slave address:
@@ -16,7 +15,7 @@
     (i2c/select-slave bus slave-address)
 
     ;; set int mirror and active-high
-    (smbus/write-byte bus (get-in mcp23017/register [:a :iocon]) 0x42) 
+    (smbus/write-byte bus (get-in mcp23017/register [:a :iocon]) 0x42)
 
     ;; enable int on ~pin 2~ all pins
     ;; (smbus/write-byte bus (get-in mcp23017/register [:a :gpinten]) 0x04)
@@ -70,17 +69,17 @@
   (def capabilities (i2c/capabilities bus))
   capabilities
   (smbus/read-byte bus (get-in chip/register [:A :IOCON]))
+   (smbus/read-byte bus (get-in mcp23017/register [:a :gpio]))
 
   ;; get state of bus :a
   ;; currently
   (get-state bus :a :gpio)
   ;; at time of interrupt
   (get-state bus :a :intcap)
-  
-  
+
   ;; get the value of the interrupt flag. setup-chip sets it to gpio2 only
   (Integer/toBinaryString (smbus/read-byte bus (get-in mcp23017/register [:a :intf])))
-  
+
   ;; get the value of gpio port 2
   (bitn 2 (smbus/read-byte bus (get-in mcp23017/register [:a :gpio])))
 
@@ -88,5 +87,5 @@
   (bitn 2 (smbus/read-byte bus (get-in mcp23017/register [:a :intcap])))
 
   (shutdown-chip bus)
-  
+
   ) ;; end comment
