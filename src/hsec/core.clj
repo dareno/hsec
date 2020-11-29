@@ -16,7 +16,7 @@ mcp23017/registers
    :door-front {:address {:mcp0 {:port :a6}}}
    :door-basement {:address {:mcp0 {:port :a7}}}
    })
-  
+
 (def zones
   {
    :Doors { :armed false :members '( :a4 :a6 :a7 ) }
@@ -26,8 +26,15 @@ mcp23017/registers
    })
 
 (defn address-of
-  "given a name path vector, get a HW address"
+  "given a name path vector, return a HW address"
   [name]
   (get-in names [name :address]))
 (address-of :door-front)
 
+(defn name-of
+  "given a HW addresss, return the name"
+  [address-of]
+  )
+
+;; create control-channel and use go block to pass to sensor
+;; consider interface between sensor and state
