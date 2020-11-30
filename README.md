@@ -1,6 +1,6 @@
 Description
 -----------
-Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts. This project is implemented with microservices, this is the overview documentation which references the components sited below in the Architecture section. 
+Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts. This project is implemented with microservices, this is the overview documentation which references the components cited below in the Architecture section. 
 
 The vision is to have an easy to maintain, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
 
