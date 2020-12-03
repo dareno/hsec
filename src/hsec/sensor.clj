@@ -18,8 +18,9 @@
           [:a :deserialized :GP2])
 
   ;; are interrupts pending?
-  (get-in (mcp23017/get-registers bus :intf mcp23017/deserialize-interrupt-integer)
-          [:a :deserialized])
+  (get-in
+   (mcp23017/get-registers bus :intf mcp23017/deserialize-interrupt-integer)
+   [:a :deserialized])
 
   ;; get PIR activity at interrupt
   (get-in (mcp23017/get-registers bus :intcap mcp23017/deserialize-gpio-integer)
@@ -36,7 +37,7 @@
 
 
   ;; start event processor
-  (go (loop []
+  (a/go (loop []
           (let [event (a/<! event-channel)]
             (if (= event nil)
               (println "event-processor: nil on event channel, shutting down")

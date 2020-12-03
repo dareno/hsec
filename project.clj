@@ -4,13 +4,15 @@
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [clj-http "3.10.0"]
+                 ;;[clj-http "3.10.0"]
                  [dvlopt/linux.gpio "1.0.0"]
                  [dvlopt/linux.i2c "1.1.1"]
-                 [org.clojure/core.async "1.1.587"]]
+                 [org.clojure/core.async "1.3.610"]]
   :main ^:skip-aot hsec.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :plugins [[refactor-nrepl "2.5.0"]
-            [cider/cider-nrepl "0.25.0-alpha1"]])
-
+  :plugins [
+            ;; [refactor-nrepl "2.5.0"]
+            [cider/cider-nrepl "0.25.5"]
+            ]
+  )
