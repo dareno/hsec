@@ -7,7 +7,8 @@
                  ;;[clj-http "3.10.0"]
                  [dvlopt/linux.gpio "1.0.0"]
                  [dvlopt/linux.i2c "1.1.1"]
-                 [org.clojure/core.async "1.3.610"]]
+                 [org.clojure/core.async "1.3.610"]
+                 [org.clojure/tools.deps.alpha "0.9.857"]]
   :main ^:skip-aot hsec.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}

@@ -3,6 +3,12 @@
                  [hsec.gpio :as gpio]
                  [clojure.core.async :as a]))
 
+(comment
+  (use 'clojure.tools.deps.alpha.repl)
+  (require '[clojure.tools.deps.alpha.repl :refer [add-lib]])
+  (add-lib 'org.clojure/core.memoize {:mvn/version "0.7.1"})
+  ,)
+
 (defn start
   "Get the initial state of all sensors as well as the change event channel"
   [shutdown-signal events-out]
