@@ -29,7 +29,9 @@ mcp23017/registers
   "given a name path vector, return a HW address"
   [name]
   (get-in names [name :address]))
-(address-of :door-front)
+
+(comment
+  (address-of :door-front))
 
 (defn name-of
   "given a HW addresss, return the name"

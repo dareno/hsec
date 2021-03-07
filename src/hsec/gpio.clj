@@ -24,17 +24,25 @@
                                                     {}
                                                     line-numbers))]
     (loop []
+
+      ;; block until an event or 100ms, then get a control message or timeout
       (let [event (gpio/event watcher 100)
             [m c] (a/alts!! [control-channel (a/timeout 10)])]
+
+        ;; publish events if they occur
         (if event
           (a/>!! event-channel
                 (format "%d interrupt for line %d detected"
                         (::gpio/nano-timestamp event)
                         (::gpio/tag event))))
+
         (if (= c control-channel)
+
           (do ;; there was a stop message, close the event-channel
             (println "gpio:" m "from control, closing event-channel and stopping.")
             (a/close! event-channel))
+
+          ;; if no control message, recur the loop
           (recur))))))
 
 (comment ;; async testing
