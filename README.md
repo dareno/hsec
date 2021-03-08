@@ -1,6 +1,8 @@
 Description
 -----------
+
 Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts. Currently re-writing from Python into Clojure.
+
 
 The vision is to have an easy to maintain, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
 
