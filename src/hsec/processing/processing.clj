@@ -1,4 +1,4 @@
-(ns hsec.sensor (:require
+(ns hsec.processing.processing (:require
                  [hsec.mcp23017 :as mcp23017]
                  [hsec.gpio :as gpio]
                  [clojure.core.async :as a]))
@@ -21,16 +21,16 @@
   (def bus (mcp23017/setup-chip "/dev/i2c-1" 0x20))
 
   ;; get current PIR state
-  (get-in (mcp23017/get-registers bus :gpio mcp23017/deserialize-gpio-integer)
+  (get-in (mcp23017/get-registers hsec.event-source.sensor-event/bus :gpio mcp23017/deserialize-gpio-integer)
           [:a :deserialized :GP2])
 
   ;; are interrupts pending?
   (get-in
-   (mcp23017/get-registers bus :intf mcp23017/deserialize-interrupt-integer)
+   (mcp23017/get-registers hsec.event-source.sensor-event/bus :intf mcp23017/deserialize-interrupt-integer)
    [:a :deserialized])
 
   ;; get PIR activity at interrupt
-  (get-in (mcp23017/get-registers bus :intcap mcp23017/deserialize-gpio-integer)
+  (get-in (mcp23017/get-registers hsec.event-source.sensor-event/bus :intcap mcp23017/deserialize-gpio-integer)
           [:a :deserialized :GP2])
 
   (mcp23017/shutdown-chip bus))
@@ -42,13 +42,13 @@
 
   ;; start event processor
   (a/go (loop []
-          (let [event (a/<! event-channel)]
+          (let [event (a/<! hsec.event-source.sensor-event/event-channel)]
             (if (= event nil)
               (println "event-processor: nil on event channel, shutting down")
               (do ;; for each event
                 (println event)
                 (println (get-in (mcp23017/get-registers
-                                  bus
+                                  hsec.event-source.sensor-event/bus
                                   :gpio mcp23017/deserialize-gpio-integer)
                                  [:a :deserialized
                                   ;; :GP2
@@ -56,7 +56,7 @@
                 (recur))))))
 
   ;; start interrupt sensor
-  (a/go (gpio/interrupts [5] sensor-control-channel event-channel))
+  (a/go (gpio/interrupts [5] sensor-control-channel hsec.event-source.sensor-event/event-channel))
 
   ;; shutdown the event-noticed
   (a/>!! sensor-control-channel "stop")

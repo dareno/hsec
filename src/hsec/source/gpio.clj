@@ -1,7 +1,7 @@
 ;; Code to monitor the GPIO pins. Pin 5 is used for interrupts from hardware.
 ;; When interrupts occur, events will be sent on a channel to the event handler.
 
-(ns hsec.gpio
+(ns hsec.source.gpio
   (:require [dvlopt.linux.gpio :as gpio]
             [clojure.core.async :as a])
   (:import java.lang.AutoCloseable))
