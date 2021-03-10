@@ -40,8 +40,8 @@
 
           (do ;; there was a stop message, close the event-channel
             (println "gpio:" m "from control, closing event-channel and stopping.")
-            (a/close! event-channel))
-
+            (a/close! event-channel)
+            "done") ;; for testing
           ;; if no control message, recur the loop
           (recur))))))
 
