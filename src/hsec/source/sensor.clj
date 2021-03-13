@@ -2,7 +2,7 @@
                         [hsec.source.mcp23017 :as mcp23017]
                         [hsec.source.gpio :as gpio]
                         [hsec.source.deserialize :as d]
-                        [Clojure.core.async :as a]
+                        [clojure.core.async :as a]
                         ))
 
 (comment ;; calling mcp23017 functions
@@ -11,16 +11,19 @@
   (def bus (mcp23017/setup-chip "/dev/i2c-1" 0x20))
 
   ;; get current PIR state
-  (:GP2 (d/deserialize-gpio-integer
-        (get-in (mcp23017/get-registers bus :gpio) [:a])))
+  (:GP2 (d/deserialize-register
+         (get-in (mcp23017/get-registers bus :gpio) [:a])
+         d/bit-to-logic-level))
 
   ;; are interrupts pending?
-  (d/deserialize-interrupt-integer (get-in
-                                    (mcp23017/get-registers bus :intf) [:a]))
+  (:GP2(d/deserialize-register
+        (get-in (mcp23017/get-registers bus :intf) [:a])
+        d/bit-to-interrupt-state))
 
   ;; get PIR activity at interrupt
-  (:GP2 (d/deserialize-gpio-integer (get-in
-                                     (mcp23017/get-registers bus :intcap) [:a])))
+  (:GP2 (d/deserialize-register
+         (get-in (mcp23017/get-registers bus :intcap) [:a])
+         d/bit-to-logic-level))
 
   (mcp23017/shutdown-chip bus))
 
@@ -38,7 +41,7 @@
                 (println event)
                 (println (-> (mcp23017/get-registers bus :gpio)
                              (:a)
-                             (d/deserialize-gpio-integer)
+                             (d/deserialize-register d/bit-to-logic-level)
                              (:GP2)))
                 (recur))))))
 
