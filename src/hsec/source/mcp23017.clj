@@ -1,14 +1,17 @@
 ;; All things specific to the mcp23017 chip. If you have to read the datasheet
 ;; or access the chip, it goes in this file. All else, no!
 ;; Datasheet: https://www.microchip.com/wwwproducts/en/MCP23017
+;; The Microchip MCP23017 has 16-bit I/O port functionality via
+;; two 8-bit ports (PORTA and PORTB). This should not be confused
+;; with addressing modes BANK=0 or BANK=1.
 
 (ns hsec.source.mcp23017
   (:require [dvlopt.linux.i2c       :as i2c]
             [dvlopt.linux.i2c.smbus :as smbus]))
 
 (def registers
-  {
-   :a  { ;; addressing mode 'a'
+  {  ;; BANK=0 addressing (registers paired)
+   :a  { ;; 'a' register, first 8 IO bits
         :iodir 0x00
         :ipol 0x02
         :gpinten 0x04
@@ -21,7 +24,7 @@
         :gpio 0x12
         :olat 0x14
         }
-   :b { ;; addressing mode 'b'
+   :b { ;; 'b' register, second 8 IO bits
        :iodir 0x01
        :ipol 0x03
        :gpinten 0x05
@@ -35,6 +38,41 @@
        :olat 0x15
        }
    })
+
+(def iocon-settings
+  [
+   0 ;; BANK: Controls how the registers are addressed
+   ;; 1 = The registers associated with each port are separated into different
+   ;;     banks.
+   ;; 0 = The registers are in the same bank (addresses are sequential).
+
+   1 ;; MIRROR: INT Pins Mirror bit
+   ;; 1 = The INT pins are internally connected
+   ;; 0 = The INT pins are not connected. INTA is associated with PORTA and INTB
+   ;;     is associated with PORTB
+
+   0 ;; SEQOP: Sequential Operation mode bit
+   ;; 1 = Sequential operation disabled, address pointer does not increment.
+   ;; 0 = Sequential operation enabled, address pointer increments.
+
+   0 ;; DISSLW: Slew Rate control bit for SDA output
+   ;; 1 = Slew rate disabled
+   ;; 0 = Slew rate enabled
+
+   0 ;; HAEN: Hardware Address Enable bit (MCP23S17 only) (Note 1)
+   ;; 1 = Enables the MCP23S17 address pins.
+   ;; 0 = Disables the MCP23S17 address pins.
+
+   0 ;; ODR: Configures the INT pin as an open-drain output
+   ;; 1 = Open-drain output (overrides the INTPOL bit.)
+   ;; 0 = Active driver output (INTPOL bit sets the polarity.)
+
+   1 ;; INTPOL: This bit sets the polarity of the INT output pin
+   ;; 1 = Active-high
+   ;; 0 = Active-low
+
+   0 ;; Unimplemented: Read as ‘0’
+])
 
 (defn get-register
   "return the byte contents of a register"
@@ -81,13 +119,12 @@
     ;; this bus will always use the selected slave address for commands
     (i2c/select-slave bus slave-address)
 
-    ;; set int mirror and active-high
-    ;; The 4 bit causes the interrupt pins to be internally connected so
-    ;; that either interrupt causes both to be on.
-    ;; The active-high causes an interrupt to have high polarity when active.
-    ;; The IOCON register is shared between :a and :b so it only needs to be
-    ;; set for one bank.
-    (smbus/write-byte bus (get-in registers [:a :iocon]) 0x42)
+    ;; setup the chip with settings defined above in the iocon-settings object
+    ;; in particular, the interrupt pins should be mirrored and driven high
+    ;; when there's an interrupt.
+    (smbus/write-byte bus
+                      (get-in registers [:a :iocon])
+                      (Integer/parseInt (apply str iocon-settings) 2))
 
     ;; enable int on all pins
     ;; (smbus/write-byte bus (get-in mcp23017/register [:a :gpinten]) 0x04)
