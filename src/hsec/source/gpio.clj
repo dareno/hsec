@@ -12,7 +12,7 @@
          {::gpio/edge-detection :rising
           ::gpio/direction      :input}))
 
-(defn interrupts
+(defn wait-for-events
   "Given GPIO lines to monitor and given a control-channel to listen to for
   when to stop, keep noticing interrupts on the GPIO lines until told to stop.
   When an interrupt is detected, put it on the event-channel."
@@ -31,10 +31,12 @@
 
         ;; publish events if they occur
         (if event
-          (a/>!! event-channel
-                (format "%d interrupt for line %d detected"
-                        (::gpio/nano-timestamp event)
-                        (::gpio/tag event))))
+          (do
+            (println event)
+            (a/>!! event-channel
+                   (format "%d interrupt for line %d detected"
+                           (::gpio/nano-timestamp event)
+                           (::gpio/tag event)))))
 
         (if (= c control-channel)
 

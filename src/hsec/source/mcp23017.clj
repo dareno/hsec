@@ -4,10 +4,20 @@
 ;; The Microchip MCP23017 has 16-bit I/O port functionality via
 ;; two 8-bit ports (PORTA and PORTB). This should not be confused
 ;; with addressing modes BANK=0 or BANK=1.
-
 (ns hsec.source.mcp23017
   (:require [dvlopt.linux.i2c       :as i2c]
             [dvlopt.linux.i2c.smbus :as smbus]))
+
+;; actually a util function, here until separate ns required
+(defn bitn
+  "return the nth most significant bit of a number"
+  [n byte]
+  (bit-shift-right (bit-and byte (bit-shift-left 1 n)) n))
+(defn fmap
+  "Run f on each value in map m. Borrowed from
+  https://stackoverflow.com/questions/1676891/mapping-a-function-on-the-values-of-a-map-in-clojure"
+  [f m]
+  (into (empty m) (for [[k v] m] [k (f v)])))
 
 (def registers
   {  ;; BANK=0 addressing (registers paired)
@@ -74,40 +84,28 @@
    0 ;; Unimplemented: Read as ‘0’
 ])
 
-(defn get-register
-  "return the byte contents of a register"
-  [bus port register]
-  (let [address (get-in registers [port register])]
-    (smbus/read-byte bus address)))
+(defn bit-to-logic-level
+  "convert logic bit to datasheet meaning"
+  [bitcode]
+  (if (= bitcode 1) :logic-high :logic-low))
 
-(comment ;; test get-register
-  (def port :a)
-  (def register :intf)
-  (def address 14)
-  )
+(defn bit-to-interrupt-state
+  "convert interrupt bit to datasheet meaning"
+  [bitcode]
+  (if (= bitcode 1) :interrupt :not-pending))
 
-(defn get-registers
-  "return the byte contents of both :a and :b registers"
-  [bus register
-   ;; deserializer
+(defn deserialize-register
+  "Given an integer, convert it into an object with keyword names like GP0."
+  [
+   state-words   ;; a fn to deserialize the bit
+   status-byte   ;; an integer to decode as a binary bitmap
    ]
-  {:a (get-register bus :a register)
-   :b (get-register bus :b register)
-   ;; refactoring to remove the  deserialization part
-   ;; (let [bank-a-integer (get-register bus :a register)
-   ;;       bank-b-integer (get-register bus :b register)]
-   ;;   {:a bank-a-integer
-   ;;    {:value bank-a-integer :deserialized (deserializer bank-a-integer)}
-   ;;    :b bank-b-integer
-   ;;    {:value bank-b-integer :deserialized (deserializer bank-b-integer)}})
-   })
-
-(comment ;; test get-registers
-  (def register :gpio)
-  (def bank-a-integer (get-register bus :a :gpio))
-  (deserialize-gpio-integer (get-register bus :a :gpio))
-  (deserialize-interrupt-integer (get-register bus :a :intf))
-  )
+  (into {} (map
+            #(let [key (keyword (str "GP" %))]
+               {key (state-words (bitn % status-byte))})
+            (range 0 8))))
+(def deserialize-gpio-register
+  (partial deserialize-register bit-to-logic-level))
 
 (defn setup-chip
   "Given a bus path and slave address:
@@ -137,3 +135,52 @@
   "prepare to cleanly exit"
   [bus]
   (i2c/close bus))
+
+(defn get-register
+  "return the byte contents of a register (action)"
+  [bus port register]
+  (comment ;; defs for testing
+    (def port :a)
+    (def register :gpio)
+    (def register :intf)
+    )
+  (let [address (get-in registers [port register])] ;; lookup register address
+    (smbus/read-byte bus address)))                 ;; return the value there
+
+(defn get-registers
+  "return the byte contents of both :a and :b registers (action)"
+  [bus register]
+  {:a (get-register bus :a register)
+   :b (get-register bus :b register)})
+
+(defn get-all
+  "Return a map of all GPO ports and their logic state. Resets
+  interrupts so this is an action."
+  [bus]
+  (comment
+    (def bus (setup-chip "/dev/i2c-1" 0x20))
+    (shutdown-chip bus)
+    (def deserialize-gpio-register (partial deserialize-register bit-to-logic-level))
+    (def gpio-registers (get-registers bus :gpio))
+    )
+
+  (let [gpio-registers (get-registers bus :gpio)]
+
+    ;; transform the map of gpio ports from a bitmap value to a map value
+    (fmap deserialize-gpio-register gpio-registers)))
+
+(defn get-changed
+  "Return a map of GPIO ports changed since interrupt and their logic state.
+  Resets interrupts so not idempotent (this is an action)."
+  [bus]
+  ;; to implement this, I need to test the behavior of the intf flag. It may
+  ;; give only the first pin to have interrupted or it may have all pins that
+  ;; have interrupted since the last read of the gpio pins. Either way, this
+  ;; function can be implemented. If it's only the first pin to have
+  ;; interrupted, I'll need to get the state at interrupt, assume the intf
+  ;; pin was a different state, then return the difference between that and
+  ;; the current pin state. Section 3.6.4 of the datasheet seems to imply that
+  ;; only one interrupt is captured at a time and that intcap will have the
+  ;; gpio value at that time. In this case, INTFA and INTFB will reflect the
+  ;; pin that caused the interrupt.
+  )

@@ -17,7 +17,7 @@
   (do
     (def sensor-control-channel (a/chan (a/sliding-buffer 10)))
     (def event-channel (a/chan (a/sliding-buffer 10)))
-    (def go-out-chan (a/go (g/interrupts [] sensor-control-channel event-channel)))
+    (def go-out-chan (a/go (g/wait-for-events [] sensor-control-channel event-channel)))
     (def timeout-channel (a/timeout 10000))
     (testing "channel should not have returned yet"
       ;; we're trying to take from the go channel but expecting it to not have

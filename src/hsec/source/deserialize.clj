@@ -1,4 +1,6 @@
 ;; Code to assist with deserializing RPi I2C registers to objects.
+;; not sure if this is needed anymore, most really belonged in gpio.
+
 (ns hsec.source.deserialize)
 
 (comment ;;obsolete
@@ -9,20 +11,18 @@
     (keyword (str (name port-keyword) number)))
   )
 
-(defn bit-to-logic-level
-  "convert bit to datasheet meaning"
-  [bitcode]
-  (if (= bitcode 1) :logic-high :logic-low))
+(comment ;; moved to gpio
 
-(defn bit-to-interrupt-state
-  "convert bit status to keywords for open and closed doors"
-  [bitcode]
-  (if (= bitcode 1) :interrupt :not-pending))
+  (defn bit-to-logic-level
+    "convert bit to datasheet meaning"
+    [bitcode]
+    (if (= bitcode 1) :logic-high :logic-low))
 
-(defn bitn
-  "return the nth most significant bit of a number"
-  [n byte]
-  (bit-shift-right (bit-and byte (bit-shift-left 1 n)) n))
+  (defn bit-to-interrupt-state
+    "convert bit status to keywords for open and closed doors"
+    [bitcode]
+    (if (= bitcode 1) :interrupt :not-pending))
+  )
 
 (comment ;; obsolete
 
@@ -34,14 +34,6 @@
                  {key (state-words (bitn % status-byte))})
               (range 0 8))))
   )
-
-(defn deserialize-register
-  "Given an integer, convert it into an object with keyword names like GP0."
-  [status-byte state-words]
-  (into {} (map
-            #(let [key (keyword (str "GP" %))]
-               {key (state-words (bitn % status-byte))})
-            (range 0 8))))
 
 (comment ;; obsolete
 
