@@ -3,7 +3,7 @@
 ;; events.
 
 (ns hsec.source.sensor (:require
-                        [hsec.source.mcp23017 :as m]
+                        [hsec.source.mcp23017 :as mcp]
                         [hsec.source.gpio :as gpio]
                         ;; [hsec.source.deserialize :as d]
                         [clojure.core.async :as a]
@@ -34,22 +34,20 @@
 
   ;; get current PIR state
   (:GP2 (d/deserialize-register
-         (get-in (m/get-registers bus :gpio) [:a])
+         (get-in (mcp/get-registers bus :gpio) [:a])
          d/bit-to-logic-level))
 
   ;; are interrupts pending?
   (:GP2(d/deserialize-register
-        (get-in (m/get-registers bus :intf) [:a])
+        (get-in (mcp/get-registers bus :intf) [:a])
         d/bit-to-interrupt-state))
 
   ;; partial testing
 
-  (:GP2 (d/deserialize-register
-        (get-in (get-registers-with-bus :intf) [:a])
-        d/bit-to-interrupt-state))
-  (:GP2 (d/deserialize-register
-         (get-in (get-registers-with-bus :gpio) [:a])
-         d/bit-to-logic-level))
+  (:GP2 (mcp/deserialize-register mcp/bit-to-interrupt-state
+        (get-in (get-registers-with-bus :intf) [:a])))
+  (:GP2 (mcp/deserialize-gpio-register
+         (get-in (get-registers-with-bus :gpio) [:a])))
   (defn handler
     "handle a new event"
     []
@@ -58,37 +56,39 @@
 
   ;; get PIR activity at interrupt
   (:GP2 (d/deserialize-register
-         (get-in (m/get-registers bus :intcap) [:a])
+         (get-in (mcp/get-registers bus :intcap) [:a])
          d/bit-to-logic-level))
 
-  (m/shutdown-chip bus)
+  (mcp/shutdown-chip bus)
   )
 
 ;; set initial chip configuration and create a fn with
-(def bus (m/setup-chip "/dev/i2c-1" 0x20))
-(def get-registers-with-bus (partial m/get-registers bus))
+(def bus (mcp/setup-chip "/dev/i2c-1" 0x20))
+(def get-registers-with-bus (partial mcp/get-registers bus))
 (comment
-  (m/get-all bus)
+  (mcp/get-all bus)
   )
 
-(defn m-handler
-  "called on interrupts corresponding to an M chip.
-  This should probably be a composition of functions.
-  1. m/get-changes
-  2. deserialize
-  3. write to event-channel"
-  [get-change-since-irq]
+(def get-irq-registers-with-bus
+  (fn [] (mcp/get-irq-registers bus)))
+
+(defn mcp-handler
+  "Called on interrupts corresponding to an MCP chip. Gets changes,
+  deserializes, and writes to event channel."
+  []
   (println (->
-            ;; (m/get-registers bus :gpio) ;; stub for get initial data
-            (get-change-since-irq)
+            (get-irq-registers-with-bus)
+            (mcp/get-changed-pins)
             (:a)
-            (d/deserialize-register d/bit-to-logic-level)
+            (mcp/deserialize-gpio-register)
             (:GP2))))
 
 (comment ;; async testing
   (def interrupt-list [5])
   (def sensor-control-channel (a/chan (a/sliding-buffer 10)))
   (def event-channel (a/chan (a/sliding-buffer 10)))
+
+  (get-irq-registers-with-bus)
 
   ;; start handler
   (a/go (loop []
@@ -97,7 +97,7 @@
               (println "event-processor: nil on event channel, shutting down")
               (do ;; for each event
                 (println event)
-                (println (-> (m/get-registers bus :gpio)
+                (println (-> (mcp/get-registers bus :gpio)
                              (:a)
                              (d/deserialize-register d/bit-to-logic-level)
                              (:GP2)))

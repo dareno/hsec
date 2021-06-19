@@ -13,6 +13,7 @@
   "return the nth most significant bit of a number"
   [n byte]
   (bit-shift-right (bit-and byte (bit-shift-left 1 n)) n))
+
 (defn fmap
   "Run f on each value in map m. Borrowed from
   https://stackoverflow.com/questions/1676891/mapping-a-function-on-the-values-of-a-map-in-clojure"
@@ -104,8 +105,12 @@
             #(let [key (keyword (str "GP" %))]
                {key (state-words (bitn % status-byte))})
             (range 0 8))))
+
 (def deserialize-gpio-register
   (partial deserialize-register bit-to-logic-level))
+
+(def deserialize-intf-register
+  (partial deserialize-register bit-to-interrupt-state))
 
 (defn setup-chip
   "Given a bus path and slave address:
@@ -139,11 +144,6 @@
 (defn get-register
   "return the byte contents of a register (action)"
   [bus port register]
-  (comment ;; defs for testing
-    (def port :a)
-    (def register :gpio)
-    (def register :intf)
-    )
   (let [address (get-in registers [port register])] ;; lookup register address
     (smbus/read-byte bus address)))                 ;; return the value there
 
@@ -152,6 +152,16 @@
   [bus register]
   {:a (get-register bus :a register)
    :b (get-register bus :b register)})
+
+(defn get-irq-registers
+  "Return all the registers needed to deduce what changed related to an
+  interrupt occurence."
+  [bus]
+  (do
+    (def intf (get-registers bus :intf))
+    (def intcap (get-registers bus :intcap))
+    (def gpio (get-registers bus :gpio))
+    {:intf intf :intcap intcap :gpio gpio}))
 
 (defn get-all
   "Return a map of all GPO ports and their logic state. Resets
@@ -169,18 +179,93 @@
     ;; transform the map of gpio ports from a bitmap value to a map value
     (fmap deserialize-gpio-register gpio-registers)))
 
-(defn get-changed
+(defn filter-map
+  "remove entries in a map that don't have the value 'interrupt"
+  [m]
+  (into {} (filter (fn [[k v]] (= v :interrupt)) m))
+  )
+
+(comment
+  (filter-map (:a irq-map))
+)
+
+(defn get-interrupt-path
+  "given a 'port->interrupt' with port and nested value of pin->interrupt-value,
+  return the path to the :interrupt pin"
+  [m]
+  (let
+      [result (->> m
+                   (fmap filter-map)
+                   (filter (fn [[k v]] (not-empty v)))
+                   (into {})
+                   )
+       port (first (keys result))
+       pin (first (keys (get-in result [port])))
+       ]
+    [port pin]
+    ))
+
+(comment
+  (def m {:a
+          {:GP0 :not-pending,
+           :GP1 :not-pending,
+           :GP2 :interrupt,
+           :GP3 :not-pending,
+           :GP4 :not-pending,
+           :GP5 :not-pending,
+           :GP6 :not-pending,
+           :GP7 :not-pending},
+          :b
+          {:GP0 :not-pending,
+           :GP1 :not-pending,
+           :GP2 :not-pending,
+           :GP3 :not-pending,
+           :GP4 :not-pending,
+           :GP5 :not-pending,
+           :GP6 :not-pending,
+           :GP7 :not-pending}})
+  (get-interrupt-path m)
+
+  (def result (->> m
+                   (fmap filter-map)
+                   (filter (fn [[k v]] (not-empty v)))
+                   (into {})
+                   ))
+  (def port (first (keys result)))
+  (def pin (first (keys (get-in result [port]))))
+  )
+
+
+(defn get-changed-pins
+  ;; consider refactoring this to take the register map. would ease testing
   "Return a map of GPIO ports changed since interrupt and their logic state.
   Resets interrupts so not idempotent (this is an action)."
-  [bus]
-  ;; to implement this, I need to test the behavior of the intf flag. It may
-  ;; give only the first pin to have interrupted or it may have all pins that
-  ;; have interrupted since the last read of the gpio pins. Either way, this
-  ;; function can be implemented. If it's only the first pin to have
-  ;; interrupted, I'll need to get the state at interrupt, assume the intf
-  ;; pin was a different state, then return the difference between that and
-  ;; the current pin state. Section 3.6.4 of the datasheet seems to imply that
-  ;; only one interrupt is captured at a time and that intcap will have the
-  ;; gpio value at that time. In this case, INTFA and INTFB will reflect the
-  ;; pin that caused the interrupt.
-  )
+  [registers]
+  ;; 1. Read INTFA and INTFB to identify the port/pin combo that caused the
+  ;;    interrupt.
+  ;; 2. Use INTCAPA and INTCAPB to identify the initial state and new event on
+  ;;    the pin that caused the interrupt.
+  ;; 3. Read GPIOA and GPIOB and use saved INTCAPs to identify any other events
+  ;;    that have since occurred.
+  ;; 4. return this set of events
+  ;;
+  ;; N.B. Theoreticaly, pins could change rapidly between the initial interrupt
+  ;;      capture and gpio read. This hardware is probably inappropriate for
+  ;;      capturing all events related to rapidly flapping pins but should
+  ;;      suffice for anything related to sensing mechanical change.
+  (->> (:intf registers) ;; keys: :intf, :intcap, and :gpio
+       (fmap deserialize-intf-register) ;; integer values to maps
+       (get-interrupt-path)             ;; e.g. '[:a :GP2]'
+       ))
+
+(comment
+  ;; sensor:
+
+  (filter-map (:a irq-map))
+  (def bus hsec.source.sensor/bus)
+
+
+  (def sample-registers (get-irq-registers bus))
+  (def registers sample-registers)
+  (get-changed-pins registers)
+)

@@ -19,11 +19,32 @@
   (is (= (m/bit-to-interrupt-state nil) :not-pending)))
 
 (deftest deserialize-register
-  (is (= (m/deserialize-gpio-register 43)
-         {:GP0 :logic-high, :GP1 :logic-high, :GP2 :logic-low,
-          :GP3 :logic-high, :GP4 :logic-low,  :GP5 :logic-high,
-          :GP6 :logic-low,  :GP7 :logic-low}))
-  (is (= (m/deserialize-register m/bit-to-interrupt-state 4)
-         {:GP0 :not-pending, :GP1 :not-pending, :GP2 :interrupt,
-          :GP3 :not-pending, :GP4 :not-pending, :GP5 :not-pending,
-          :GP6 :not-pending, :GP7 :not-pending})))
+  (let [m-test {:GP0 :logic-high, :GP1 :logic-high, :GP2 :logic-low,
+                :GP3 :logic-high, :GP4 :logic-low,  :GP5 :logic-high,
+                :GP6 :logic-low,  :GP7 :logic-low}]
+    (is (= (m/deserialize-gpio-register 43) m-test)))
+  (let [m-test {:GP0 :not-pending, :GP1 :not-pending, :GP2 :interrupt,
+                :GP3 :not-pending, :GP4 :not-pending, :GP5 :not-pending,
+                :GP6 :not-pending, :GP7 :not-pending}]
+    (is (= (m/deserialize-register m/bit-to-interrupt-state 4) m-test))))
+
+(deftest get-interrupt-path
+  (let [interrupt-map {:a
+                       {:GP0 :not-pending,
+                        :GP1 :not-pending,
+                        :GP2 :interrupt,
+                        :GP3 :not-pending,
+                        :GP4 :not-pending,
+                        :GP5 :not-pending,
+                        :GP6 :not-pending,
+                        :GP7 :not-pending},
+                       :b
+                       {:GP0 :not-pending,
+                        :GP1 :not-pending,
+                        :GP2 :not-pending,
+                        :GP3 :not-pending,
+                        :GP4 :not-pending,
+                        :GP5 :not-pending,
+                        :GP6 :not-pending,
+                        :GP7 :not-pending}}]
+    (is (= (m/get-interrupt-path interrupt-map) [:a :GP2]))))
