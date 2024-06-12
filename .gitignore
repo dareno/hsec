@@ -12,3 +12,6 @@ pom.xml.asc
 .hg/
 .cpcache
 .calva/
+__pycache__/
+*.pyc
+.DS_Store

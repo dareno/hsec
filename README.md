@@ -39,6 +39,15 @@ Components
 * alert - route state changes through all the appropriate channels (e.g. iCloud, house klaxon)
 * webui - web app for control (e.g. arm/disarm)
 
-How To Use
-----------
-coming soon...
+## Installation
+
+```sh
+pip install -r docs/requirements.txt
+```
+
+## Usage
+
+```sh
+python -m hsec.main
+```
+
