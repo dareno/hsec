@@ -1,5 +1,6 @@
 from queue import Empty
 
+
 class EventProcessor:
     """
     Class to process events from the event queue.
@@ -27,7 +28,9 @@ class EventProcessor:
         while not self.shutdown_event.is_set():
             try:
                 # Get the next event from the event queue
-                event = self.event_queue.get(timeout=1)  # Timeout to allow checking the shutdown event
+                event = self.event_queue.get(
+                    timeout=1
+                )  # Timeout to allow checking the shutdown event
                 # Process the event
                 self.process_event(event)
             except Empty:

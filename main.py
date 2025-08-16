@@ -6,14 +6,20 @@ from hardware.mcp23017 import MCP23017
 from hardware.mygpio import MyGPIO
 from sensor_monitor import SensorMonitor
 from event_processor import EventProcessor
+import smbus2
 
 def main():
     event_queue = Queue()
     shutdown_event = threading.Event()
 
-    i2c_bus = 1
+    i2c_bus_num = 1
     i2c_address = 0x20
-    mcp23017 = MCP23017(i2c_bus, i2c_address)
+    
+    # Create the I2C bus and device
+    bus = smbus2.SMBus(i2c_bus_num)
+    mcp23017 = MCP23017(bus, i2c_address)
+    mcp23017.setup()  # Explicitly initialize the device
+    
     gpio = MyGPIO(5)
 
     sensor_monitor = SensorMonitor(gpio, mcp23017, event_queue, shutdown_event)

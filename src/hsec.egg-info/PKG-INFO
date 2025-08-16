@@ -1,3 +1,13 @@
+Metadata-Version: 2.4
+Name: hsec
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: smbus2
+Dynamic: license-file
+
 Description
 -----------
 
@@ -51,53 +61,3 @@ pip install -r docs/requirements.txt
 python -m hsec.main
 ```
 
-
-## OPA sidecar (Docker)
-
-Run OPA locally on the Raspberry Pi and mount policies read-only:
-
-```sh
-docker run --name hsec-opa -p 8181:8181 \
-  -v "$(pwd)/policies:/policies:ro" \
-  --restart unless-stopped -d \
-  openpolicyagent/opa:latest run --server /policies
-```
-
-Note: choose an OPA image/tag compatible with your Pi architecture.
-
-### Test policies
-
-```sh
-opa test policies/
-```
-
-### Query decision API (example)
-
-```sh
-curl -s -X POST 'http://127.0.0.1:8181/v1/data/hsec/alarm' \
-  -H 'Content-Type: application/json' \
-  -d @- <<'JSON'
-{
-  "operation": "alarm.evaluate",
-  "subject": { "sensor_id": "front_door_reed", "group_id": "doors" },
-  "state": { "prev": 0.0, "curr": 1.0, "time": "2025-08-14T21:30:00Z" },
-  "config": { "armed": true, "mode": "home_night", "time_windows": [{"start":"22:00","end":"06:00"}] },
-  "context": { "location": "Front Door" },
-  "schema_version": 0
-}
-JSON
-```
-
-Expected response:
-
-```json
-{ "result": { "allow": true, "reasons": ["armed", "change"] } }
-```
-
-### Enable OPA in the app
-
-Set the URL for the sidecar so `event_processor.py` can call it (feature-flagged):
-
-```sh
-export HSEC_OPA_URL=http://127.0.0.1:8181
-```

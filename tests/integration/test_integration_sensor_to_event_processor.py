@@ -5,7 +5,8 @@ from event_processor import EventProcessor
 import threading
 from queue import Queue
 
-def test_integration_sensor_to_event_processor():
+def test_integration_sensor_to_event_processor(capsys):
+    """End-to-end: SensorMonitor enqueues data and EventProcessor processes it."""
     # Create a real event queue
     event_queue = Queue()
 
@@ -26,11 +27,16 @@ def test_integration_sensor_to_event_processor():
     # Trigger an interrupt (simulate sensor reading)
     sensor_monitor.read_data_on_interrupt()
 
-    # Process the event
-    event_processor.process_event(event_queue.get())
+    # Check if data is put on the event queue (should now contain one item)
+    assert not event_queue.empty()
 
-    # Check if data is put on the event queue
-    assert not event_queue.empty() == False
+    # Process the event
+    event = event_queue.get()
+    event_processor.process_event(event)
+
+    # Assert observable processor behavior
+    out, _ = capsys.readouterr()
+    assert "Processing event: mocked_data" in out
 
 if __name__ == "__main__":
     pytest.main()

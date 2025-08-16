@@ -1,0 +1,2 @@
+[console_scripts]
+hsec = hsec.main:main

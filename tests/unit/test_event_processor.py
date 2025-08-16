@@ -25,7 +25,7 @@ def test_process_event():
     event_processor.process_event(event_queue.get())
 
     # Verify that the event processor processes the event
-    assert not event_queue.empty() == False
+    assert event_queue.empty() 
 
 if __name__ == "__main__":
     pytest.main()

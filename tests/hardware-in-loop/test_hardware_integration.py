@@ -1,4 +1,6 @@
 # tests/integration/test_hardware_integration.py
+# Validates: any-change (both edges) interrupts across ports A/B; mirrored INT line to Pi;
+# interrupt clears after reading GPIOA then GPIOB (see hardware/mcp23017.py module docstring).
 
 import threading
 import time

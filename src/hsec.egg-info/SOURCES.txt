@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+src/hsec.egg-info/PKG-INFO
+src/hsec.egg-info/SOURCES.txt
+src/hsec.egg-info/dependency_links.txt
+src/hsec.egg-info/entry_points.txt
+src/hsec.egg-info/requires.txt
+src/hsec.egg-info/top_level.txt

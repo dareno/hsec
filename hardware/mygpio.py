@@ -1,3 +1,12 @@
+"""
+GPIO interface for the Raspberry Pi INT line from MCP23017.
+
+Notes
+- Pi INT input uses the Pi's internal pull-down; this only biases the Pi input, not MCP GPIOs.
+- MCP23017 INT is configured as active-high, push-pull (see `hardware/mcp23017.py`).
+- Debounce can be applied on the Pi side using gpiozero's `bounce_time` if needed.
+  We keep code minimal here; tune in hardware-in-loop as required.
+"""
 from gpiozero import Button
 
 class MyGPIO:
@@ -12,6 +21,8 @@ class MyGPIO:
         Args:
             pin_number (int): The BCM GPIO pin number (default: 5).
         """
+        # INT line from MCP23017 to Pi: use pull_up=False because INT is active-high push-pull
+        # Optional debounce: pass bounce_time (e.g., 0.05 for ~50 ms) if needed for your hardware
         self.button = Button(pin_number, pull_up=False)
 
     def register_interrupt_callback(self, callback):
