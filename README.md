@@ -1,7 +1,7 @@
 Description
 -----------
 
-Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts. Currently re-writing from Python into Clojure.
+Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts.
 
 
 The vision is to have an easy to maintain, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
@@ -27,7 +27,7 @@ Now installed in a case with sensors fed to the port expander.
 Technology
 ----------
 * Raspberry Pi because it's small, low power, and runs linux so I don't have to re-invent the wheel on a microcontroller.
-* Clojure because it's more expressive
+* Python 3.12+ with uv-managed environment; Ruff for linting/formatting
 * MCP23017 because it's a cheap port expander and there are examples
 * i2c bus for IC to IC communication because there are examples
 * smbus standard over i2c because there are examples
@@ -41,14 +41,28 @@ Components
 
 ## Installation
 
+Prerequisites: Python 3.12+ and uv installed.
+
 ```sh
-pip install -r docs/requirements.txt
+# Create/sync environment for development and tests (no hardware deps):
+uv sync --group test
+
+# For hardware-in-loop runs on a Raspberry Pi, include hardware deps:
+# uv sync --group test --group hardware
 ```
 
 ## Usage
 
+Run the main app:
+
 ```sh
-python -m hsec.main
+uv run python ./main.py
+```
+
+CLI status tool (no install step needed):
+
+```sh
+uv run python -m hardware.cli_status --help
 ```
 
 
