@@ -7,7 +7,7 @@
 - **Keep it simple**: Start minimal, add complexity only when needed.
 
 ## Scope
-- Refactor current `hardware/mcp23017.py`, `hardware/mygpio.py`, `sensor_monitor.py`.
+- Refactor current `hardware/mcp23017.py`, `hardware/mygpio.py`.
 - Introduce minimal new modules: `models.py`, `interfaces.py`, `configuration_manager.py`, `hardware_access.py`, `deserializer.py`, `semantic_mapper.py`, `event_manager.py`.
 
 ## Out of Scope (for now)
@@ -32,13 +32,13 @@
 ### Phase 2 — Processing & Orchestration
 - Create `deserializer.py`: parse MCP23017 port bytes to `SensorReading`.
 - Create `semantic_mapper.py`: map readings to domain `Event`s.
-- Replace `sensor_monitor.py` with `event_manager.py`: queue management and orchestration.
+- Introduce `event_manager.py`: queue management and orchestration in the application layer (planned component).
 - DoD: End-to-end flow works (INT → read → deserialize → map → enqueue).
 
 ## Migration Strategy
 - Introduce new modules alongside existing ones.
 - Keep current HIL tests passing throughout.
-- Migrate `sensor_monitor.py` last, directly (no compatibility shim).
+- Stage orchestration into the planned application layer last (no compatibility shim).
 - Read env vars via `configuration_manager` to avoid drift.
 
 ## File Structure (Final)
@@ -76,7 +76,7 @@ hsec/
 - [ ] hardware/mygpio.py (refactor)
 - [ ] deserializer.py
 - [ ] semantic_mapper.py
-- [ ] event_manager.py (replace sensor_monitor.py)
+- [ ] event_manager.py (orchestration component)
 - [ ] Tests updated
 - [ ] pyproject.toml: optional hardware deps
 
