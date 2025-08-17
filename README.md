@@ -1,7 +1,7 @@
 Description
 -----------
 
-Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts. Currently re-writing from Python into Clojure.
+Home security project. Raspberry Pi using MCP23017 and GPIO with interrupts.
 
 
 The vision is to have an easy to maintain, home security system with no service fees. Maybe not super practical, but a fun exercise. Also, super-useful when done. 
@@ -27,7 +27,7 @@ Now installed in a case with sensors fed to the port expander.
 Technology
 ----------
 * Raspberry Pi because it's small, low power, and runs linux so I don't have to re-invent the wheel on a microcontroller.
-* Clojure because it's more expressive
+* Python 3.12+ with uv-managed environment; Ruff for linting/formatting
 * MCP23017 because it's a cheap port expander and there are examples
 * i2c bus for IC to IC communication because there are examples
 * smbus standard over i2c because there are examples
@@ -39,6 +39,77 @@ Components
 * alert - route state changes through all the appropriate channels (e.g. iCloud, house klaxon)
 * webui - web app for control (e.g. arm/disarm)
 
-How To Use
-----------
-coming soon...
+## License
+
+MIT License. See `LICENSE` for details.
+
+## Installation
+
+Prerequisites: Python 3.12+ and uv installed.
+
+```sh
+# Create/sync environment for development and tests (no hardware deps):
+uv sync --group test
+
+# For hardware-in-loop runs on a Raspberry Pi, include hardware deps:
+# uv sync --group test --group hardware
+```
+
+## Usage
+
+Application layer components (Sensor Monitor, Event Processor) are planned and not yet implemented. For now, use the CLI status tool for diagnostics (no install step needed):
+
+```sh
+uv run python -m hardware.cli_status --help
+```
+
+
+## OPA sidecar (Docker)
+
+Run OPA locally on the Raspberry Pi and mount policies read-only:
+
+```sh
+docker run --name hsec-opa -p 8181:8181 \
+  -v "$(pwd)/policies:/policies:ro" \
+  --restart unless-stopped -d \
+  openpolicyagent/opa:latest run --server /policies
+```
+
+Note: choose an OPA image/tag compatible with your Pi architecture.
+
+### Test policies
+
+```sh
+opa test policies/
+```
+
+### Query decision API (example)
+
+```sh
+curl -s -X POST 'http://127.0.0.1:8181/v1/data/hsec/alarm' \
+  -H 'Content-Type: application/json' \
+  -d @- <<'JSON'
+{
+  "operation": "alarm.evaluate",
+  "subject": { "sensor_id": "front_door_reed", "group_id": "doors" },
+  "state": { "prev": 0.0, "curr": 1.0, "time": "2025-08-14T21:30:00Z" },
+  "config": { "armed": true, "mode": "home_night", "time_windows": [{"start":"22:00","end":"06:00"}] },
+  "context": { "location": "Front Door" },
+  "schema_version": 0
+}
+JSON
+```
+
+Expected response:
+
+```json
+{ "result": { "allow": true, "reasons": ["armed", "change"] } }
+```
+
+### Enable OPA in the app
+
+Set the URL for the sidecar so the Event Processor component can call it (planned, feature-flagged):
+
+```sh
+export HSEC_OPA_URL=http://127.0.0.1:8181
+```
