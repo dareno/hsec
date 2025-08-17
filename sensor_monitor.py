@@ -1,6 +1,8 @@
 from queue import Queue
 import threading
 
+
+# Arch: SEC.APP.SensorMonitor
 class SensorMonitor:
     """
     Class to monitor sensors, read data when an interrupt occurs,
@@ -25,8 +27,7 @@ class SensorMonitor:
         # Register interrupt callback
         self.gpio.register_interrupt_callback(self.read_data_on_interrupt)
 
-        print("SensorMonitor startup.")  
-
+        print("SensorMonitor startup.")
 
     def read_data_on_interrupt(self, channel=None):
         """
@@ -36,11 +37,11 @@ class SensorMonitor:
             channel: The GPIO channel number (default: None).
         """
 
-        print("SensorMonitor detects event.")  
+        print("SensorMonitor detects event.")
 
         # Read data from sensor via I2C
         data = self.i2c.read_data()
-        
+
         # Put data on the event queue
         self.event_queue.put(data)
 
@@ -50,4 +51,4 @@ class SensorMonitor:
 
     def cleanup(self):
         self.gpio.cleanup()
-        print("SensorMonitor shutdown.") 
+        print("SensorMonitor shutdown.")

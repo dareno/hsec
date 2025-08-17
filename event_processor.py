@@ -1,6 +1,7 @@
 from queue import Empty
 
 
+# Arch: SEC.APP.EventProc
 class EventProcessor:
     """
     Class to process events from the event queue.
