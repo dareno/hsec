@@ -7,7 +7,10 @@ Notes
 - Debounce can be applied on the Pi side using gpiozero's `bounce_time` if needed.
   We keep code minimal here; tune in hardware-in-loop as required.
 """
+
+# Arch: HW.GPIO.INT
 from gpiozero import Button
+
 
 class MyGPIO:
     """

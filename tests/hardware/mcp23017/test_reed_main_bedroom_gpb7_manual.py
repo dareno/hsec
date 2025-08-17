@@ -16,4 +16,10 @@ def test_reed_main_bedroom_gpb7_manual(i2c_bus, hardware_config, pi_int_button):
     dev = MCP23017(bus=i2c_bus, device_address=hardware_config.mcp23017_addr)
     dev.setup()
 
-    run_reed_edge_sequence(dev, pi_int_button, bit_index=7, location="main bedroom windows (GPB7)", port="B")
+    run_reed_edge_sequence(
+        dev,
+        pi_int_button,
+        bit_index=7,
+        location="main bedroom windows (GPB7)",
+        port="B",
+    )

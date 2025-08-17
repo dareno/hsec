@@ -39,6 +39,10 @@ Components
 * alert - route state changes through all the appropriate channels (e.g. iCloud, house klaxon)
 * webui - web app for control (e.g. arm/disarm)
 
+## License
+
+MIT License. See `LICENSE` for details.
+
 ## Installation
 
 Prerequisites: Python 3.12+ and uv installed.
@@ -53,13 +57,7 @@ uv sync --group test
 
 ## Usage
 
-Run the main app:
-
-```sh
-uv run python ./main.py
-```
-
-CLI status tool (no install step needed):
+Application layer components (Sensor Monitor, Event Processor) are planned and not yet implemented. For now, use the CLI status tool for diagnostics (no install step needed):
 
 ```sh
 uv run python -m hardware.cli_status --help
@@ -110,7 +108,7 @@ Expected response:
 
 ### Enable OPA in the app
 
-Set the URL for the sidecar so `event_processor.py` can call it (feature-flagged):
+Set the URL for the sidecar so the Event Processor component can call it (planned, feature-flagged):
 
 ```sh
 export HSEC_OPA_URL=http://127.0.0.1:8181

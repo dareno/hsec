@@ -75,4 +75,4 @@ $ uv run pytest -s -q -m hardware tests/hardware/mcp23017/test_reed_main_bedroom
 ## Traceability
 
 - Functional Requirement: `FR7 — Sensor Data Processing`
-- Story: `ST-004 — Window magnetic reed change detection (GPB7, main bedroom windows)` in `docs/02-release-plan.md`
+- Story: `ST-004 — Window magnetic reed change detection (GPB7, main bedroom windows)` in `docs/03-release-plan.md`

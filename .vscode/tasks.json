@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "uv: tests (default)",
+      "type": "shell",
+      "command": "uv run pytest",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "uv: tests (hardware)",
+      "type": "shell",
+      "command": "uv run pytest -m hardware",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ruff: check",
+      "type": "shell",
+      "command": "uv run ruff check .",
+      "problemMatcher": []
+    },
+    {
+      "label": "ruff: fix",
+      "type": "shell",
+      "command": "uv run ruff check . --fix",
+      "problemMatcher": []
+    },
+    {
+      "label": "ruff: format",
+      "type": "shell",
+      "command": "uv run ruff format .",
+      "problemMatcher": []
+    }
+  ]
+}

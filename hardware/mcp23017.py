@@ -51,6 +51,7 @@ References
   https://ww1.microchip.com/downloads/en/devicedoc/20001952c.pdf
 """
 
+# Arch: HW.Drv.MCP23017
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 import warnings
 

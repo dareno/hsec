@@ -1,0 +1,3 @@
+# Ignore local-only overrides kept by individual developers
+settings.local.json
+*.local.json

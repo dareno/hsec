@@ -3,6 +3,8 @@ from hardware.mcp23017 import MCP23017
 from tests.hardware.fixtures.devices import run_reed_edge_sequence
 
 pytestmark = [pytest.mark.hardware, pytest.mark.manual]
+
+
 def test_reed_gpa6_edges_manual(i2c_bus, hardware_config, pi_int_button):
     """
     ST-002 / FR7: Manual hardware verification for front door reed on MCP23017 GPA6.

@@ -136,7 +136,9 @@ def _run_toggle_sequence(
     value0 = _read_port(dev, port)
     baseline = bit_at(value0, bit_index)
     gpio_label = "GPIOA" if port.upper() == "A" else "GPIOB"
-    print(f"[HIL] Baseline captured {gpio_label}={value0:08b} (bit{bit_index}={baseline}).")
+    print(
+        f"[HIL] Baseline captured {gpio_label}={value0:08b} (bit{bit_index}={baseline})."
+    )
 
     print(
         f"[HIL] {phase1_label} the {location} now; waiting up to {int(first_timeout_s)}s for edge."
@@ -148,7 +150,9 @@ def _run_toggle_sequence(
         v = _read_port(dev, port)
         b = bit_at(v, bit_index)
         if b != baseline:
-            print(f"[HIL] {phase1_label} detected {gpio_label}={v:08b} (bit{bit_index}={b}).")
+            print(
+                f"[HIL] {phase1_label} detected {gpio_label}={v:08b} (bit{bit_index}={b})."
+            )
             phase1_seen = True
             break
     if not phase1_seen:
@@ -165,7 +169,9 @@ def _run_toggle_sequence(
         v2 = _read_port(dev, port)
         b2 = bit_at(v2, bit_index)
         if b2 == baseline:
-            print(f"[HIL] {phase2_label} detected {gpio_label}={v2:08b} (bit{bit_index}={b2}).")
+            print(
+                f"[HIL] {phase2_label} detected {gpio_label}={v2:08b} (bit{bit_index}={b2})."
+            )
             break
     else:
         raise AssertionError(

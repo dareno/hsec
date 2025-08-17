@@ -60,7 +60,9 @@ def pi_int_button(hardware_config: HardwareConfig):
     """
     if platform.system() != "Linux":
         pytest.skip("GPIO tests require Linux (Raspberry Pi)")
-    gpiozero = pytest.importorskip("gpiozero", reason="gpiozero required for Pi GPIO tests")
+    gpiozero = pytest.importorskip(
+        "gpiozero", reason="gpiozero required for Pi GPIO tests"
+    )
     # INT line uses pull_down on the Pi side; debounce ~50ms as per project notes
     btn = gpiozero.Button(hardware_config.int_gpio, pull_up=False, bounce_time=0.05)
     yield btn

@@ -11,6 +11,7 @@ from event_processor import EventProcessor
 from hardware.mcp23017 import MCP23017
 from hardware.mygpio import MyGPIO
 
+
 @pytest.mark.hardware
 def test_hardware_integration():
     event_queue = Queue()
@@ -30,7 +31,9 @@ def test_hardware_integration():
     processor_thread.start()
 
     try:
-        print("Please trigger the hardware (e.g., press the button) to generate an event.")
+        print(
+            "Please trigger the hardware (e.g., press the button) to generate an event."
+        )
         time.sleep(10)  # Give the user time to trigger the hardware
 
         while not event_queue.empty():
@@ -44,6 +47,7 @@ def test_hardware_integration():
         sensor_thread.join()
         processor_thread.join()
         sensor_monitor.cleanup()
+
 
 if __name__ == "__main__":
     test_hardware_integration()

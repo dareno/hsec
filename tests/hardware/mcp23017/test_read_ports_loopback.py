@@ -56,7 +56,9 @@ def _common_setup(dev, i2c_bus, addr: int):
     _ = _read_gpiob(i2c_bus, addr)
 
 
-def test_read_ports_clears_int_on_gpa0_loopback(i2c_bus, hardware_config, pi_int_button):
+def test_read_ports_clears_int_on_gpa0_loopback(
+    i2c_bus, hardware_config, pi_int_button
+):
     from gpiozero import DigitalOutputDevice
     from hardware.mcp23017 import MCP23017
     from tests.hardware.fixtures.devices import wait_for_condition
@@ -117,14 +119,14 @@ def test_read_port_A_clears_int(i2c_bus, hardware_config, pi_int_button):
         assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0)
 
         # read_port('A') clears and returns A value
-        a_val = dev.read_port('A')
+        a_val = dev.read_port("A")
         assert wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=1.0)
         assert (a_val & 0x01) == 0x00
 
         # Rising edge -> expect INT again
         driver.on()
         assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0)
-        a_val2 = dev.read_port('A')
+        a_val2 = dev.read_port("A")
         assert wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=1.0)
         assert (a_val2 & 0x01) == 0x01
     finally:
@@ -134,7 +136,9 @@ def test_read_port_A_clears_int(i2c_bus, hardware_config, pi_int_button):
             pass
 
 
-def test_read_port_B_clears_int_even_when_A_triggered(i2c_bus, hardware_config, pi_int_button):
+def test_read_port_B_clears_int_even_when_A_triggered(
+    i2c_bus, hardware_config, pi_int_button
+):
     from gpiozero import DigitalOutputDevice
     from hardware.mcp23017 import MCP23017
     from tests.hardware.fixtures.devices import wait_for_condition
@@ -153,14 +157,14 @@ def test_read_port_B_clears_int_even_when_A_triggered(i2c_bus, hardware_config, 
         assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0)
 
         # read_port('B') should still clear INT due to MIRROR + read of both ports
-        b_val = dev.read_port('B')
+        b_val = dev.read_port("B")
         assert wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=1.0)
         assert 0 <= b_val <= 0xFF
 
         # Rising edge -> expect INT
         driver.on()
         assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0)
-        b_val2 = dev.read_port('B')
+        b_val2 = dev.read_port("B")
         assert wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=1.0)
         assert 0 <= b_val2 <= 0xFF
     finally:

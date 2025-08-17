@@ -2,6 +2,23 @@
 
 ## Purpose
 This guide explains the **why** and **how** behind each step in our refactor plan. You'll learn the Python patterns, language features, and architectural principles that make this codebase maintainable and testable.
+Normative system specs live in `docs/`; this guide describes how to work with them (process, tooling, coding patterns).
+
+## Where to find what
+
+| Document                                               | Purpose                                           | Use when                                             |
+|:-------------------------------------------------------|:--------------------------------------------------|:-----------------------------------------------------|
+| [Context Map](docs/04-context-map.md)                  | Bounded contexts, responsibilities, relationships | Scoping changes; checking cross-context links        |
+| [Domain Model](docs/05-domain-model.md)                | Ubiquitous language; entities/VOs/services/events | Naming; modeling behavior/events                      |
+| [Architecture Overview](docs/06-architecture-overview.md) | High-level structure, layering, component index   | Navigating architecture; see 07/08 for details       |
+| [Interface Contracts](docs/07-interface-contracts.md)  | Wire-level details (hardware, schemas, OPA, versions) | Integrating/validating interfaces                |
+| [Runtime Flows](docs/08-runtime-flows.md)              | Sequences and timing                              | Understanding runtime interactions                     |
+| [Testing Strategy](docs/09-testing-strategy.md)        | Test types, markers, env, commands                | Running tests; hardware is opt-in                      |
+| [Release Plan](docs/03-release-plan.md)                | Priorities and story backlog with FR traceability | Planning work; referencing FR/Story IDs               |
+| [Product Vision](docs/01-project-vision.md)            | North star and goals                              | Validating alignment                                   |
+| [Product Requirements](docs/02-product-requirements.md)| Functional requirements and acceptance criteria    | Deriving stories; validating behavior                  |
+| [Requirements Traceability](docs/10-requirements-traceability.md) | Requirement→design/tests mapping               | Verifying coverage/compliance                          |
+| [ADRs](docs/adr/)                                      | Decision records (options, decision, consequences) | Making/revisiting architectural decisions              |
 
 ## Core Concepts
 
@@ -282,13 +299,13 @@ class EventManager:
 ## Test-Driven Development (TDD) Workflow
 
 - **Principle (always-on for code changes)**: New or changed behavior starts with a failing test, implement the minimal code to pass, then refactor.
-- **Scope**: Applies to changes under `src/`, `hardware/`, and top-level orchestrators like `main.py` and `event_processor.py`. Docs-only edits are excluded.
+- **Scope**: Applies to changes under `src/`, `hardware/`, and top-level application components (Sensor Monitor, Event Processor). Docs-only edits are excluded.
 - **Definition of Done**:
   - Failing test written that expresses the acceptance criteria or unit contract.
   - Minimal implementation makes tests pass; no out-of-scope features.
   - Refactor and keep tests green; ensure coverage for edge cases relevant to the story.
-  - Traceability: commits/PR reference FR and Story IDs (see `docs/02-release-plan.md`).
-- **Test organization/execution**: Follow the repository layout and defaults in `tests/` and `pyproject.toml` (hardware tests are opt-in via marker; default runs exclude hardware).
+  - Traceability: commits/PR reference FR and Story IDs (see `docs/03-release-plan.md`).
+- **Test organization/execution**: See `docs/09-testing-strategy.md` for directory layout, markers, and commands.
 
 ### Unit Tests
 **Purpose**: Test individual components in isolation.
@@ -369,6 +386,89 @@ Notes:
 
 Once you understand these concepts, you'll be ready to implement the refactor step by step. Each component builds on the previous ones, creating a clean, maintainable architecture that's easy to test and extend.
 
+
+## Doc-change protocol
+
+Purpose: Keep docs the source of truth and in sync with the evolving domain. Apply BEFORE code when the domain model or boundaries change.
+
+### When to trigger
+- Changes to entities, value objects, domain services, domain events, aggregates/repositories
+- Changes to bounded contexts, integration contracts, layering/dependency rules, or diagram structure
+
+### Documents to update (in this order)
+1) Context Map
+   - Bounded contexts, ownership (core/supporting), upstream/downstream, integration patterns (e.g., ACL)
+2) Domain Model
+   - Ubiquitous language and model narrative; diagrams (entities/VOs/services/events/aggregates)
+   - Clarify which repository interfaces live in the domain (aggregates only)
+3) Architecture Overview
+   - Layering (Application, Domain, Infrastructure, ACL, UI) inside the core BC
+   - Dependency rules and code placement conventions
+   - Component Index (bridging code): update IDs ↔ primary code paths for diagrammed components
+   - Diagrams render cleanly (Mermaid guardrails below)
+4) ADR (new or update)
+   - Decision, options, rationale, consequences; link to updated sections
+
+### Layering & dependency rules (normative)
+- Domain: depends on nothing (no imports from Application/Infrastructure/ACL/UI)
+- Application: may depend on Domain and ACL ports/types; not on Infrastructure
+- ACL: may depend on Hardware BC and Domain types; Domain must not depend on ACL
+- Infrastructure: may depend on Application/Domain to implement their interfaces; Domain/Application do not depend on Infrastructure
+- UI/Presenter: depends on Application DTOs/services; avoid reaching into Domain internals directly
+
+### Code placement conventions
+- Application: orchestration and presenters (e.g., monitor/event loop, view-model builders)
+- Domain: entities, value objects, domain services, domain events, repository interfaces (aggregates)
+- ACL: translators/mappers (e.g., mapping config, port map, deserializers)
+- Infrastructure: concrete adapters (I/O, persistence, logging)
+- Supporting BCs (e.g., hardware): chip/wiring-centric code and contracts
+
+### Mermaid diagram guardrails
+- Begin diagrams with: `%%{init: {"layout":"elk"}}%%` and `graph TD` (or LR)
+- Quote subgraph titles when they contain parentheses: `subgraph SECBC["Security BC (core)"]`
+- Use solid arrows for data, dashed for dependency (document legend if used)
+- Close every `subgraph ... end`; connect edges to nodes (not subgraph IDs)
+ - Do not embed file paths in diagram nodes; use friendly names (optionally with `[Component ID]`)
+
+### Component IDs and code breadcrumbs
+- ID convention: `BC.Layer.Component` (e.g., `SEC.APP.SensorMonitor`, `HW.Drv.MCP23017`). Keep IDs stable.
+- Breadcrumbs in code: add a one-liner at the top of mapped modules/classes: `# Arch: <Component ID>`.
+- Mapping lives in the Architecture Overview's Component Index. Avoid duplicating paths elsewhere.
+
+### Required outputs (per change)
+- Diffs for Context Map, Domain Model, Architecture Overview, and ADR
+- One-sentence “why” per document (traceability)
+- Validation checklist (see below)
+- Brief list of test impacts (unit/integration/hardware)
+ - Component Index updated for affected components
+ - Breadcrumbs added/updated in code for affected Component IDs
+
+### Validation checklist
+- Names/IDs/states consistent across all docs
+- Diagrams render without errors
+- Dependency rules respected (no domain → app/infra/acl imports)
+- Repositories kept to aggregates in Domain; time-series/read-model stores are app/infra ports
+- Product vision/requirements unchanged; inconsistencies flagged
+ - Each Component ID in the Component Index is present in code via a breadcrumb comment `# Arch: <ID>`
+
+### PR description template (copy/paste)
+```
+Summary: <1–2 lines of the domain/boundary change>
+Traceability: links to updated sections in Context Map, Domain Model, Architecture Overview, ADR
+Validation: [ ] names consistent; [ ] diagrams render; [ ] deps OK; [ ] repo placement OK
+Tests: unit/integration/hardware impacts and planned updates
+Out of scope: what this PR intentionally does not change
+```
+
+### ADR template (copy/paste)
+```
+# <Decision title>
+- Context: short problem statement and constraints
+- Options considered: A/B/C with pros/cons
+- Decision: chosen option and why
+- Consequences: trade-offs and follow-ups
+- Links: updated doc sections and related PRs
+```
 
 ## Environment & Tooling (uv + ruff + pytest)
 

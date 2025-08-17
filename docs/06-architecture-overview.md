@@ -2,14 +2,120 @@
 doc_type: system_arch
 upstream:
   - 02-product-requirements.md
-  - 03-context-map.md
-  - 04-domain-model.md
+  - 04-context-map.md
+  - 05-domain-model.md
 ---
 
 # Architecture Overview
 
 ## Overview
-This document outlines the high-level technical architecture for the Home Security System, describing how concrete software/hardware forms map to system functions (Crawley) and how contexts interact (see `03-context-map.md` and `04-domain-model.md`).
+This document outlines the high-level technical architecture for the Home Security System, describing how concrete software/hardware forms map to system functions (Crawley) and how contexts interact (see `04-context-map.md` and `05-domain-model.md`).
+
+## Architecture Diagram
+
+For the domain view, see `05-domain-model.md#domain-diagram`.
+
+```mermaid
+%%{init: {"layout": "elk"}}%%
+
+graph TD
+subgraph HWBC["Hardware BC (supporting, internal)"]
+  HW["MCP23017 and sensors<br/>INT to Pi GPIO"]
+end
+
+subgraph SECBC["Security BC (core)"]
+    direction LR
+
+    subgraph APP[Application]
+      Monitor["Sensor Monitor / Event Processor"]
+      Presenter["Presenter / ViewModelBuilder"]
+      UI["UI / CLI"]
+    end
+
+    subgraph DOM[Domain]
+      Services["Domain Services:<br/>SemanticMapperService, SecurityContextService"]
+      Entities["Entities:<br/>Sensor, SensorGroup, Alarm"]
+      Events["Domain Events:<br/>SensorStateChanged, Alarm"]
+      Values["Value Objects:<br/>SensorReading, SecurityConfig"]
+      Repos["Repositories (interfaces):<br/>SensorRepository, ..."]
+    end
+
+    subgraph INF[Infrastructure]
+      MCPDrv["hardware/mcp23017.py::MCP23017"]
+      GPIO["hardware/mygpio.py::MyGPIO"]
+      Store["Persistence Adapters:<br/>ReadingStore/ConfigStore (TBD)"]
+    end
+
+    subgraph ACL[Anti-Corruption Layer]
+      Cfg["config/sensors.toml"]
+      PortMap["PortMap (ACL)"]
+      Deser["services/sensor_deserializer.py"]
+    end
+  end
+
+  %% Wiring (solid=data; dashed=dependency)
+  HW -->|I2C/GPIO/INT| MCPDrv
+  HW -->|INT line| GPIO
+
+  MCPDrv -->|raw bits| Deser
+  Deser -->|SensorReadings| Monitor
+
+  %% Presentation flow
+  Monitor -->|readings/events| Presenter
+  PortMap -->|labels/types| Presenter
+  Presenter -.->|uses mapping| PortMap
+  Presenter -->|view models| UI
+
+  %% App flow
+  Monitor -->|apply policies| Services
+  Services -->|emit| Events
+  Monitor -->|persist/read models| Store
+```
+
+## Architecture Layers
+
+This mirrors the normative rules defined in [DEVELOPER_GUIDE.md › Doc-change protocol](../DEVELOPER_GUIDE.md#doc-change-protocol). If discrepancies occur, the Developer Guide prevails and an ADR must be raised.
+
+- Domain: depends on nothing (no imports from Application/Infrastructure/ACL/UI).
+- Application: may depend on Domain and ACL ports/types; not on Infrastructure.
+- ACL: may depend on Hardware BC and Domain types; Domain must not depend on ACL.
+- Infrastructure: may depend on Application/Domain to implement their interfaces; Domain/Application do not depend on Infrastructure.
+- UI/Presenter: depends on Application DTOs/services; avoid reaching into Domain internals directly.
+
+### Placement guidance (pragmatic)
+
+- Application: orchestration and presenters (e.g., Sensor Monitor/Event Processor, ViewModel builders).
+- Domain: entities, value objects, domain services, domain events, repository interfaces (aggregates only).
+- ACL: translators/mappers between hardware-centric data and domain types.
+- Infrastructure: concrete adapters (I2C/GPIO/persistence/logging).
+- Hardware BC (supporting, internal): chip/wiring-centric code and contracts.
+
+Note: In line with `04-context-map.md`, the Security BC comprises subdomains (modules): Sensing, Alarm Evaluation, Configuration, and Notification. These are modules inside the Security BC, not separate bounded contexts.
+
+### Diagram legend
+
+- Solid arrows: data/control flow. Dashed arrows: dependency.
+- Subgraphs denote layers/BCs; edges connect to nodes, not subgraph labels.
+
+### Related docs
+
+- Context Map: `04-context-map.md`
+- Interface Contracts: `07-interface-contracts.md`
+- Runtime Flows: `08-runtime-flows.md`
+- Testing Strategy: `09-testing-strategy.md`
+- Requirements Traceability: `10-requirements-traceability.md`
+- Process: [Developer Guide › Doc-change protocol](../DEVELOPER_GUIDE.md#doc-change-protocol)
+
+### Component Index (bridging code)
+
+This table maps key diagram components to primary code locations. Update rows when components are added/renamed/moved. Use breadcrumbs in code (`# Arch: <ID>`) for traceability.
+
+| ID                     | Name                     | Layer/BC            | Primary path                         | Notes                    |
+|:-----------------------|:-------------------------|:--------------------|:-------------------------------------|:-------------------------|
+| HW.Drv.MCP23017        | MCP23017 driver          | Infrastructure (HW) | hardware/mcp23017.py::MCP23017       | I2C config, reads        |
+| HW.GPIO.INT            | Pi GPIO INT adapter      | Infrastructure (HW) | hardware/mygpio.py::MyGPIO           | Debounce ~50 ms          |
+| SEC.APP.SensorMonitor  | Sensor Monitor           | Application         | (planned; path TBD)                  | Orchestration/event loop |
+| SEC.APP.EventProc      | Event Processor          | Application         | (planned; path TBD)                  | PEP → OPA decision req   |
 
 ## Assumptions
 - Runs on Raspberry Pi (Linux) with I2C enabled; MCP23017 connected per wiring guide.
@@ -24,98 +130,27 @@ This document outlines the high-level technical architecture for the Home Securi
 - Notification (optional): Deliver alarms to outputs (e.g., logs, sounder).
 
 ## Mapping Form to Function (Crawley)
-| Form (Implementation) | Function | Source |
-|------------------------|---------|--------|
-| `hardware/mcp23017.py` (I2C config, read), `hardware/mygpio.py` (Pi INT line), `sensor_monitor.py` (loop/handlers) | Sensing | PRD FR7–FR9; Context Map: Hardware I/O → Sensing |
-| `event_processor.py` (PEP: state tracking + decision request), OPA (Rego) PDP | Alarm Evaluation | PRD FR3–FR6; Domain Model |
-| Config storage (TBD file or simple store) consumed by sensing/alarm components | Configuration | PRD FR1–FR4, FR10 |
-| Simple logger/sounder adapters subscribed to Alarm events | Notification (optional) | PRD FR5–FR6 |
+| Form (Implementation)                                                                                                 | Function               | Source                                      |
+|:----------------------------------------------------------------------------------------------------------------------|:-----------------------|:--------------------------------------------|
+| `hardware/mcp23017.py` (I2C config, read), `hardware/mygpio.py` (Pi INT line), Sensor Monitor (planned)               | Sensing                | PRD FR7–FR9; Context Map: Hardware I/O → Sensing |
+| Event Processor (planned; PEP: state tracking + decision request), OPA (Rego) PDP                                      | Alarm Evaluation       | PRD FR3–FR6; Domain Model                   |
+| Config storage (TBD file or simple store) consumed by sensing/alarm components                                        | Configuration          | PRD FR1–FR4, FR10                           |
+| Simple logger/sounder adapters subscribed to Alarm events                                                             | Notification (optional) | PRD FR5–FR6                                  |
 
-## Interrupt and Event Flow
-- MCP23017 configuration (see `hardware/mcp23017.py`):
-  - IOCON: INTPOL=1 (active-high INT), MIRROR=1 (INTA/INTB tied), ODR=0 (push-pull).
-  - INTCONA/B=0x00 (compare-to-previous → any-edge), GPINTENx enable for monitored pins.
-- Pi GPIO INT handling (see `hardware/mygpio.py`):
-  - `gpiozero.Button(pin, pull_up=False, bounce_time≈0.05)`; use `when_pressed` for rising edge.
-- Interrupt clearing strategy:
-  - Read GPIOA (0x12) then GPIOB (0x13) to clear regardless of triggering port; consider INTCAPx to capture latched state.
-- Event sequence:
-  1) Hardware change → INT rises → `sensor_monitor.py` reads ports
-  2) Sensing maps pins→`sensor_id`, compares with repository → emits `SensorStateChanged`
-  3) Alarm evaluation checks arming + time window → emits `Alarm` as needed
+## Runtime at a Glance
+- INT rises → Sensor Monitor reads ports, maps pins→`sensor_id`, emits `SensorStateChanged`; Event Processor (PEP) may call OPA and emit `Alarm` if allowed. See `08-runtime-flows.md` for detailed sequences.
 
-## Testing Seams
-
-- **Unit seams (pure logic)**
-  - Edge detection on raw MCP23017 bytes: isolate a function that consumes `GPIOA`/`GPIOB` values and previous state to produce changes. Test with synthetic bytes (no hardware).
-  - State tracking and mapping: verify `sensor_id` mapping and change detection in `event_processor.py`/helpers without I/O.
-
-- **Integration seams (software-only)**
-  - Mock `hardware/mcp23017.py` reads and `hardware/mygpio.py` callbacks to drive `sensor_monitor.py` and `event_processor.py` end-to-end.
-  - Assert emitted events/logs and repository updates.
-
-- **Hardware-in-loop (opt-in)**
-  - Real I2C + GPIO using Raspberry Pi; marked with `@pytest.mark.hardware` and excluded by default in `pyproject.toml`.
-  - Validate INT handling, port reads, and wiring (see `img/` and wiring notes; `hardware/` modules).
-
-- **Execution defaults**
-  - Default CI/local runs exclude hardware tests; run with `uv run pytest` or `-m hardware` for HIL.
-  - Test layout follows `tests/` structure: `unit/`, `integration/`, `hardware/`.
+## Diagnostics & Testability
+- Test types and execution defaults (unit/integration/HIL): see `09-testing-strategy.md`.
+  - Hardware env vars and debounce guidance captured in the strategy doc.
 
 ## Policy-as-Code (OPA) for Alarm Evaluation
-- Pattern: PEP in `event_processor.py` constructs a decision request; OPA (PDP) evaluates Rego policies.
-- Scope: Business logic decisions only (e.g., should a sensor/group alarm now?). I/O (sensor reads, notifications) stays in Python.
-- Execution options:
-  - Embedded: load an OPA WASM bundle from disk and evaluate in-process (offline-first, fast).
-  - Sidecar: call a local OPA server over HTTP on localhost.
-  - Selected: Sidecar in Docker on Raspberry Pi; mount policies into the container.
-- Policy layout (options):
-  - Recommended: top-level `policies/` by context, mounted read-only into OPA.
-    ```
-    policies/
-      alarm/          # alarm evaluation policies
-        policy.rego
-        tests/        # `opa test` unit tests
-      sensing/        # (future) sensing-related policies if needed
-      shared/         # common helpers (e.g., time window utils)
-    ```
-  - Alternative: co-locate under each context (e.g., `src/hsec/alarm/policies/`).
-    - Pro: keeps code+policy together. Con: packaging/publishing may mix concerns.
-- Decision inputs (schema excerpt): `operation`, `sensor_id/group_id`, `armed`, `prev/curr`, `time`, `time_windows`, `mode`, config metadata.
-- Decision outputs: `{ "allow": true|false, "reasons": ["armed", "change", "in_window"] }`.
-- Testing: Unit tests for Rego rules; golden tests using captured decision inputs.
+- PEP in Event Processor (planned) constructs decision inputs; OPA (PDP) evaluates Rego policies.
+- Operational choice and rationale: see ADR `adr/0001-opa-execution-mode.md`.
+- Request/response schemas and headers: see `07-interface-contracts.md`.
 
-## Functional Requirements Mapping
-- FR1: Sensor Grouping
-  - Function: Allow users to define groups (`group_id`) mapping to lists of `sensor_id`s.
-  - Form: Configuration store (TBD file-backed) read by `sensor_monitor.py` and `event_processor.py`.
-- FR2: Sensor Capacity
-  - Function: Support up to 16 sensors per MCP23017 and ≥5 groups.
-  - Form: Hardware limit via `hardware/mcp23017.py` (16 pins); config validation in Configuration/UI; simple guard checks in `sensor_monitor.py`.
-- FR3: Arming Preconditions
-  - Function: Permit arming only if all targeted sensors are in safe states (reed 0.0, PIR 0.0).
-  - Form: `event_processor.py` checks latest readings from repository before setting `armed=True`.
-- FR4: Arming State Persistence
-  - Function: Persist `armed` state per sensor/group.
-  - Form: `SecurityConfig` (see `04-domain-model.md`) persisted via configuration store; consumed by `event_processor.py`.
-- FR5: Alarm Generation
-  - Function: Emit `Alarm` when an armed sensor/group changes state during restricted times.
-  - Form: `event_processor.py` (PEP) requests OPA decision; on allow emits `Alarm`.
-- FR6: Alarm Context
-  - Function: Include `sensor_id`/`group_id` and context (location, time) in alarms.
-  - Form: Event payload fields populated by `event_processor.py` using config metadata.
-- FR7: Sensor Data Processing
-  - Function: Parse MCP23017 raw bytes into `SensorReading(sensor_id, value, timestamp)`.
-  - Form: `hardware/mcp23017.py` provides port reads; `sensor_monitor.py` maps pins→`sensor_id` and constructs `SensorReading`.
-- FR8: State Tracking
-  - Function: Store/retrieve latest `SensorReading` per `sensor_id` for change detection.
-  - Form: In-memory `SensorReadingRepository` (per `04-domain-model.md`) owned by `event_processor.py`/`sensor_monitor.py`.
-- FR9: Contextual Evaluation
-  - Function: Provide current time and security mode to evaluate rules.
-  - Form: Time source injected into `event_processor.py`; security mode from `SecurityConfig`; both passed to OPA input.
-- FR10: User-Defined Time Windows
-  - Function: Support user-defined restricted time windows.
-  - Form: `TimeWindow` value object in `SecurityConfig`; evaluated by OPA policy (input provided by `event_processor.py`).
+## Requirements Traceability
+For full FR-to-components mapping, see `10-requirements-traceability.md`.
 
 ## Non-Functional Requirements Mapping
 - Performance: Process INT→Alarm within 1–2 s.
@@ -123,45 +158,17 @@ This document outlines the high-level technical architecture for the Home Securi
 - Reliability: False alarms <1%.
   - Tactics: Compare-to-previous filtering; repository of last readings; optional INTCAP reads.
 - Maintainability: Functional core (pure rules) + imperative shell (I/O).
-  - Tactics: Keep domain rules in `event_processor.py` and simple adapters around hardware.
+  - Tactics: Keep domain rules in Event Processor (planned) and simple adapters around hardware.
 
 ## System Structure
-- Contexts: Hardware I/O, Sensing, Alarm, Configuration/UI, Notification (optional).
-- Integration:
-  - Events: `SensorStateChanged`, `Alarm`.
-  - Interfaces: I2C via `smbus2` (inside `hardware/mcp23017.py`), Pi GPIO via `gpiozero`.
+- See `04-context-map.md` for responsibilities and relationships between the Hardware I/O BC and the Security BC subdomains (Sensing, Alarm Evaluation, Configuration/UI, and Notification).
 
 ## Integration Contracts
-- Events (see `11-interface-contracts.md`):
-  - `SensorStateChanged`
-    ```json
-    { "type": "SensorStateChanged", "sensor_id": "front_door_reed", "prev": 0.0, "curr": 1.0, "time": "2025-08-14T21:30:00Z" }
-    ```
-  - `Alarm`
-    ```json
-    { "type": "Alarm", "source_kind": "sensor", "source_id": "front_door_reed", "reason": "armed && change && in_window", "time": "2025-08-14T21:30:00Z", "context": { "location": "Front Door" } }
-    ```
-
-### Policy Decision API (OPA)
-- Input
-```json
-{
-  "operation": "alarm.evaluate",
-  "subject": { "sensor_id": "front_door_reed", "group_id": "doors" },
-  "state": { "prev": 0.0, "curr": 1.0, "time": "2025-08-14T21:30:00Z" },
-  "config": { "armed": true, "mode": "home_night", "time_windows": [{"start":"22:00","end":"06:00"}] },
-  "context": { "location": "Front Door" }
-}
-```
-- Output
-```json
-{ "allow": true, "reasons": ["armed", "change", "in_window"] }
-```
+See `07-interface-contracts.md` for authoritative event schemas and the OPA decision API.
 
 ## Key Decisions
-- MCP23017 INT: active-high, push-pull, INTA/INTB mirrored.
-- Compare-to-previous interrupt mode (any-edge) for change detection.
-- Pi INT line uses internal pulldown; debounce ≈50 ms via `gpiozero.Button`.
+- Hardware INT polarity/mirroring/debounce: see [Hardware Interfaces](07-interface-contracts.md#hardware-interfaces).
+- Policy execution mode: see ADR [0001: OPA Execution Mode](adr/0001-opa-execution-mode.md).
 
 ## Risks and Mitigations
 - Hardware bounce or noise.

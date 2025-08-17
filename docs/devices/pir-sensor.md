@@ -51,6 +51,6 @@ Note: PIR modules vary in polarity and hold times. Treat the “toggle away from
 
 ## Traceability
 
-- Story: `ST-001 — PIR change detection` in `docs/02-release-plan.md`
+- Story: `ST-001 — PIR change detection` in `docs/03-release-plan.md`
 - Functional Requirement: `FR7 — Sensor Data Processing`
 - Test: `tests/hardware/mcp23017/test_pir_gpa1_manual.py`

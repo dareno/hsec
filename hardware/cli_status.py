@@ -93,7 +93,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             "Watch MCP23017 ports and display door/window (reed) and PIR status."
         ),
     )
-    ap.add_argument("--bus", type=int, default=int(os.getenv("HSEC_I2C_BUS", "1")), help="I2C bus number (default from HSEC_I2C_BUS or 1)")
+    ap.add_argument(
+        "--bus",
+        type=int,
+        default=int(os.getenv("HSEC_I2C_BUS", "1")),
+        help="I2C bus number (default from HSEC_I2C_BUS or 1)",
+    )
     ap.add_argument(
         "--addr",
         type=lambda s: int(s, 0),

@@ -53,11 +53,14 @@ def test_pi_int_line_rising_edges_and_debounce(pi_int_button, i2c_bus, hardware_
         # Ensure stable low to start
         driver.off()
         time.sleep(0.05)
+
         # Ensure INT is deasserted before starting by explicitly clearing any pending interrupt
         def clear_int_with_retry() -> None:
             for _ in range(5):
                 _ = dev.read_data()
-                if wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=0.5):
+                if wait_for_condition(
+                    lambda: not pi_int_button.is_pressed, timeout_s=0.5
+                ):
                     return
                 time.sleep(0.05)
             pytest.fail("INT line stuck asserted before test start")
@@ -66,22 +69,30 @@ def test_pi_int_line_rising_edges_and_debounce(pi_int_button, i2c_bus, hardware_
 
         # Generate one clean rising edge via MCP: LOW->HIGH on GPA0 triggers INT
         driver.on()
-        assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0), "INT did not assert on rising edge"
+        assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0), (
+            "INT did not assert on rising edge"
+        )
         time.sleep(0.1)  # hold high beyond debounce window
 
         # Return low and ensure it deasserts
         driver.off()
         # Clear the MCP interrupt to allow INT to return low
         _ = dev.read_data()
-        assert wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=1.0), "INT did not deassert after clear"
+        assert wait_for_condition(
+            lambda: not pi_int_button.is_pressed, timeout_s=1.0
+        ), "INT did not deassert after clear"
 
         # Repeat sequence to ensure stability and debounce semantics
         driver.on()
-        assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0), "INT did not assert on second rising edge"
+        assert wait_for_condition(lambda: pi_int_button.is_pressed, timeout_s=1.0), (
+            "INT did not assert on second rising edge"
+        )
         time.sleep(0.1)
         driver.off()
         _ = dev.read_data()
-        assert wait_for_condition(lambda: not pi_int_button.is_pressed, timeout_s=1.0), "INT did not deassert after second clear"
+        assert wait_for_condition(
+            lambda: not pi_int_button.is_pressed, timeout_s=1.0
+        ), "INT did not deassert after second clear"
     finally:
         try:
             driver.close()

@@ -5,7 +5,7 @@ upstream: []
 # Project Vision
 
 **Vision Statement**  
-To create a reliable and secure that allows homeowners to monitor their home and surrounding property by being notified when conditions are outside of pre-defined thresholds. False alarms will occur less than once per year, the system will be easy to use and maintain.
+To create a reliable and secure home security system that allows homeowners to monitor their home and surrounding property by being notified when conditions are outside of pre-defined thresholds. False alarms will occur less than once per year, the system will be easy to use and maintain.
 
 **Target Audience**  
 Homeowners and small business owners seeking an affordable, customizable security solution that they can own and operate themselves.

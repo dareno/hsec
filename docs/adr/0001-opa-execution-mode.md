@@ -43,5 +43,5 @@ Run OPA as a local HTTP sidecar in Docker on the Raspberry Pi. Mount policies re
 
 ## Follow-ups
 - Keep input schema unfrozen while early; increment `schema_version` as it stabilizes.
-- Add golden tests that serialize real decision inputs from `event_processor.py`.
+- Add golden tests that serialize real decision inputs from the Event Processor component (planned).
 - Consider graceful fallback behavior if OPA is unavailable (e.g., deny-by-default with clear logging).

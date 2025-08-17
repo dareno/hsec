@@ -79,6 +79,6 @@ Rationale: any-change detection keeps tests polarity-agnostic (NO vs NC) and rob
 
 ## Traceability
 
-- Stories: `ST-002 — Front door plunger contact change detection (GPA6)`, `ST-003 — Door plunger contact sensors verification (GPA3/GPA4/GPA7)` in `docs/02-release-plan.md`
+- Stories: `ST-002 — Front door plunger contact change detection (GPA6)`, `ST-003 — Door plunger contact sensors verification (GPA3/GPA4/GPA7)` in `docs/03-release-plan.md`
 - Functional Requirement: `FR7 — Sensor Data Processing`
 - Tests: see paths listed above

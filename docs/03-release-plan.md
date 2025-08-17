@@ -17,19 +17,20 @@ Status: Planned | In Progress | Blocked | Done | Deferred
 
 ## FR Priorities
 Edit Priority/Target per release planning. Do not renumber FRs.
+Note: FR titles below are convenience labels; authoritative definitions live in `docs/02-product-requirements.md`.
 
-| FR ID | Title                    | Priority | Target Release | Notes |
-|:-----:|:-------------------------|:--------:|:--------------:|:-----:|
-|  FR1  | Sensor Grouping          |          |                |       |
-|  FR2  | Sensor Capacity          |          |                |       |
-|  FR3  | Arming Preconditions     |          |                |       |
-|  FR4  | Arming State Persistence |          |                |       |
-|  FR5  | Alarm Generation         |          |                |       |
-|  FR6  | Alarm Context            |          |                |       |
-|  FR7  | Sensor Data Processing   |          |                |       |
-|  FR8  | State Tracking           |          |                |       |
-|  FR9  | Contextual Evaluation    |          |                |       |
-| FR10  | User-Defined Time Windows|          |                |       |
+| FR ID                                                            | Title                    | Priority | Target Release | Notes |
+|:----------------------------------------------------------------:|:-------------------------|:--------:|:--------------:|:-----:|
+| [FR1](02-product-requirements.md#fr1-sensor-grouping)            | Sensor Grouping          |          |                |       |
+| [FR2](02-product-requirements.md#fr2-sensor-capacity)            | Sensor Capacity          |          |                |       |
+| [FR3](02-product-requirements.md#fr3-arming-preconditions)       | Arming Preconditions     |          |                |       |
+| [FR4](02-product-requirements.md#fr4-arming-state-persistence)   | Arming State Persistence |          |                |       |
+| [FR5](02-product-requirements.md#fr5-alarm-generation)           | Alarm Generation         |          |                |       |
+| [FR6](02-product-requirements.md#fr6-alarm-context)              | Alarm Context            |          |                |       |
+| [FR7](02-product-requirements.md#fr7-sensor-data-processing)     | Sensor Data Processing   |          |                |       |
+| [FR8](02-product-requirements.md#fr8-state-tracking)             | State Tracking           |          |                |       |
+| [FR9](02-product-requirements.md#fr9-contextual-evaluation)      | Contextual Evaluation    |          |                |       |
+| [FR10](02-product-requirements.md#fr10-user-defined-time-windows)| User-Defined Time Windows|          |                |       |
 
 ## Story Backlog
 Stories slice FRs into deliverable units. Relationship is many-to-many: a story may advance multiple FRs, and an FR typically requires multiple stories.
@@ -46,7 +47,7 @@ Stories slice FRs into deliverable units. Relationship is many-to-many: a story 
 Scope
 - Manual hardware verification of PIR on MCP23017 `GPA1` using the Raspberry Pi.
 - Code under test: `hardware/mcp23017.py` (and `hardware/mygpio.py` only for INT-line debounce if needed).
-- Exclude application layer (`sensor_monitor.py`, `event_processor.py`) and any mocks/fakes.
+- Exclude application layer (Sensor Monitor, Event Processor) and any mocks/fakes.
 
 Acceptance Criteria (FR7: Sensor Data Processing via hardware test)
 - Wiring: PIR output -> MCP23017 `GPA1`; MCP `INT` -> Raspberry Pi BCM 5; common ground and power per project notes.
@@ -78,7 +79,7 @@ Out of Scope (deferred)
 Scope
 - Manual hardware verification of a door plunger switch (mechanical contact) on MCP23017 `GPA6` (front door) using the Raspberry Pi.
 - Code under test: `hardware/mcp23017.py` (and `hardware/mygpio.py` only for INT-line debounce if needed).
-- Exclude application layer (`sensor_monitor.py`, `event_processor.py`) and any mocks/fakes.
+- Exclude application layer (Sensor Monitor and Event Processor components) and any mocks/fakes.
 
 Acceptance Criteria (FR7: Sensor Data Processing via hardware test)
 - Wiring: Door plunger switch output -> MCP23017 `GPA6`; MCP `INT` -> Raspberry Pi BCM 5; common ground and power per project notes.
@@ -114,7 +115,7 @@ Scope
   - Family room door on `GPA4` (bit 4)
   - Basement door on `GPA7` (bit 7)
 - Code under test: `hardware/mcp23017.py` (and `hardware/mygpio.py` only for INT-line debounce if needed).
-- Exclude application layer (`sensor_monitor.py`, `event_processor.py`) and any mocks/fakes.
+- Exclude application layer (Sensor Monitor and Event Processor components) and any mocks/fakes.
 
 Acceptance Criteria (FR7: Sensor Data Processing via hardware tests)
 - Wiring per device docs; MCP `INT` -> Raspberry Pi BCM 5; common ground and power.
@@ -159,7 +160,7 @@ Accounting in Story
 Scope
 - Manual hardware verification of a magnetic window reed contact on MCP23017 `GPB7` (bit 7) using the Raspberry Pi (main bedroom windows).
 - Code under test: `hardware/mcp23017.py` (and `hardware/mygpio.py` only for INT-line debounce if needed).
-- Exclude application layer (`sensor_monitor.py`, `event_processor.py`) and any mocks/fakes.
+- Exclude application layer (Sensor Monitor and Event Processor components) and any mocks/fakes.
 
 Acceptance Criteria (FR7: Sensor Data Processing via hardware test)
 - Wiring: Window reed contact output -> MCP23017 `GPB7`; MCP `INT` -> Raspberry Pi BCM 5; common ground and power per project notes.
