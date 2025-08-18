@@ -54,7 +54,25 @@ This document defines the interfaces between hardware, software components, and 
     ```json
     { "type": "Alarm", "source_kind": "sensor", "source_id": "front_door_reed", "reason": "armed && change && in_window", "time": "2025-08-14T21:30:00Z", "context": { "location": "Front Door" }, "schema_version": 0 }
     ```
-  - Optional transparency: add `reasons` array (e.g., `["armed","change","in_window"]`) sourced from OPA decision.
+  - Optional transparency: add `reasons` array (e.g., `[["armed","change","in_window"]]`) sourced from OPA decision.
+
+## ACL Inbound Payloads
+
+- mcp23017.reading (schema v0)
+  - Purpose: transport-neutral payload representing a single read of MCP23017 GPIO ports, consumed by the ACL deserializer to emit domain `SensorReading`s.
+  - Schema (example):
+    ```json
+    { "type": "mcp23017.reading", "gpioa": 0, "gpiob": 0, "time": "2025-08-14T21:30:00Z", "schema_version": 0 }
+    ```
+  - Fields (v0):
+    - `type`: string; must equal `"mcp23017.reading"`.
+    - `gpioa`: integer 0–255; bitfield of port A (bit0=GPA0 ... bit7=GPA7).
+    - `gpiob`: integer 0–255; bitfield of port B (bit0=GPB0 ... bit7=GPB7).
+    - `time`: ISO-8601 UTC string (e.g., `"2025-08-14T21:30:00Z"`).
+    - `schema_version`: integer; must equal 0 for v0.
+  - Validation notes:
+    - Strict mode: reject unknown `schema_version`, missing or extra fields, and type/range mismatches.
+    - Consumers may provide a PortMap to translate set bits to `sensor_id` and type (`reed`/`pir`) and normalize values to domain floats (0.0/1.0).
 
 ## Configuration Read Interfaces
 

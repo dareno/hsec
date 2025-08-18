@@ -41,6 +41,8 @@ Stories slice FRs into deliverable units. Relationship is many-to-many: a story 
 | ST-002   | Front door plunger contact change detection (GPA6)| FR7        |       P1  | Done |
 | ST-003   | Door plunger contact sensors verification (kitchen GPA3, family-room GPA4, basement GPA7) | FR7 |       P1  | Done    |
 | ST-004   | Window magnetic reed change detection (GPB7, main bedroom windows) | FR7 |       P1  | Done |
+| ST-005   | MCP23017 bits -> SensorReading         | FR7        |       P1  | Planned |
+| ST-006   | Schema-versioned payload ingestion (v0)| FR7        |       P2  | Planned |
 
 ## ST-001 — Acceptance Criteria & Scope
 
@@ -183,6 +185,64 @@ Accounting in Story
 - Attach observed readings for `GPB7` (GPIOB snapshots and bit values across edges) in the PR linked to `ST-004` and `FR7`.
 
 - Observed (2025-08-16): Baseline `GPIOB=01111111` (bit7=0) → Open `GPIOB=11111111` (bit7=1) → Close `GPIOB=01111111` (bit7=0).
+
+## ST-005 — Acceptance Criteria & Scope
+
+Scope
+- Implement a minimal ACL deserializer that converts a pair of MCP23017 port values into domain `SensorReading` objects (no JSON/schema handling).
+- Primary code location: `services/sensor_deserializer.py` (ACL). Outputs `SensorReading` value objects per `docs/05-domain-model.md`.
+- No hardware dependencies. Unit tests only.
+
+Acceptance Criteria (FR7: Sensor Data Processing)
+- Input: `gpioa` and `gpiob` as integers in [0, 255], plus a timestamp (float seconds) and a PortMap (mapping bits to `sensor_id` and `type`).
+- Behavior:
+  - Validate ranges/types for `gpioa`/`gpiob`.
+  - For each mapped pin, produce one `SensorReading(sensor_id: str, value: float, timestamp: float)`.
+  - Normalization: bit HIGH → `1.0`, bit LOW → `0.0` for both reed and PIR (per wiring notes in `docs/07-interface-contracts.md#hardware-interfaces`).
+  - Deterministic ordering of outputs (e.g., by `sensor_id`).
+- Errors (typed):
+  - `PayloadValidationError` for type/range issues.
+  - `PortMappingError` if PortMap refers to an invalid pin key.
+
+Test Strategy (TDD)
+- Unit tests under `tests/unit/`:
+  - Happy path: given `gpioa`/`gpiob` and a PortMap, returns expected list of `SensorReading` with correct values and stable ordering.
+  - Range/type validation: raise `PayloadValidationError` on invalid `gpioa`/`gpiob`.
+  - Port mapping edge: unknown pin key → `PortMappingError`.
+
+Traceability
+- FR: [FR7](02-product-requirements.md#fr7-sensor-data-processing)
+- Architecture: aligns with `docs/06-architecture-overview.md` ACL deserializer producing `SensorReadings` for the Sensor Monitor.
+
+## ST-006 — Acceptance Criteria & Scope
+
+Scope
+- Add schema-versioned transport ingestion for inbound payloads, producing the same `SensorReading` outputs by delegating to the ST-005 deserializer.
+- Primary code location: `services/sensor_deserializer.py` (ACL) or adjacent module.
+- Docs-first: define `mcp23017.reading` v0 under `docs/07-interface-contracts.md#acl-inbound-payloads`.
+
+Acceptance Criteria (FR7: Sensor Data Processing)
+- Input formats (v0):
+  - JSON string or Python `dict` representing a single MCP23017 read.
+  - Schema (v0):
+    ```json
+    { "type": "mcp23017.reading", "gpioa": 0, "gpiob": 0, "time": "2025-08-14T21:30:00Z", "schema_version": 0 }
+    ```
+- Behavior:
+  - Strict validation: reject unknown `schema_version`, missing/extra fields, type mismatches, or out-of-range values with typed errors.
+  - Time handling: convert ISO-8601 to a UNIX timestamp (float seconds) before delegating to ST-005 logic.
+- Errors (typed):
+  - `UnknownSchemaVersion` when `schema_version != 0`.
+  - `PayloadValidationError` for missing/extra fields or type/range issues.
+
+Test Strategy (TDD)
+- Unit tests under `tests/unit/`:
+  - Happy path JSON/dict inputs → correct `SensorReading`s (mock PortMap).
+  - Errors: version, missing/extra fields, type/range.
+
+Traceability
+- FR: [FR7](02-product-requirements.md#fr7-sensor-data-processing)
+- Interface Contracts: `docs/07-interface-contracts.md#acl-inbound-payloads` (v0) introduced in this story.
 
 ## Delivery & Traceability Conventions
 - Link PRs and commits to FRs and Stories:

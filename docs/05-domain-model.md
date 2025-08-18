@@ -44,6 +44,7 @@ classDiagram
     context
   }
   class SensorReading {
+    sensor_id
     value: float
     timestamp: datetime
   }
@@ -92,7 +93,7 @@ classDiagram
   - Attributes: `source` (sensor/group), `time`, `context`
 
 ## Value Objects
-- SensorReading(value: float, timestamp: datetime)
+- SensorReading(sensor_id: str, value: float, timestamp: datetime)
 - SecurityConfig(armed: { sensors: map[sensor_id -> bool], groups: map[group_id -> bool] }, mode: str, time_windows: TimeWindow[])
 - TimeWindow(start: HH:MM, end: HH:MM)
 

@@ -66,6 +66,10 @@ subgraph SECBC["Security BC (core)"]
   Presenter -.->|uses mapping| PortMap
   Presenter -->|view models| UI
 
+  %% Mapping for deserialization
+  PortMap -->|labels/types| Deser
+  Deser -.->|uses mapping| PortMap
+
   %% App flow
   Monitor -->|apply policies| Services
   Services -->|emit| Events
