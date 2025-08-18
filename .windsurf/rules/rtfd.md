@@ -2,10 +2,12 @@
 trigger: always_on
 ---
 
-- Read docs/ first; treat it as the source of truth and high‑level direction.
-- Extract only relevant context from docs/ and include/cite it in the request.
-- Docs‑first: update docs/* before code when concepts change.
-- Traceability: link changes/operations to the appropriate spec sections and decision points.
-- Consistency: code (models/operations) must match documented names, IDs, and states.
-- product vision and product requirements are NEVER to be updated. If changes are not consistent, warn the user.
-- On domain changes, apply the doc-change protocol before code (see [DEVELOPER_GUIDE.md › Doc-change protocol](DEVELOPER_GUIDE.md#doc-change-protocol)).
+- Source of truth: Read docs/ first; cite files/sections in replies.
+- PRD/Vision immutability: Never modify documents with doc_type: prd or doc_type: vision.
+- PRD suggestions only: Propose “PRD Suggestions” (anchor, proposed wording, type, rationale, citations). Do not write files unless asked.
+- Docs-first: For domain/interface changes, update docs per DEVELOPER_GUIDE.md › Doc-change protocol (Context Map, Domain Model, Architecture Overview, Interface Contracts, ADR) before code.
+- UL and naming: PRD uses human terms. Domain Model holds UL + mapping to code/wire. Interface Contracts define exact field names/types. Code must match docs.
+- Time semantics: Domain “Instant”; wire ISO-8601 UTC; code UNIX seconds. Avoid encodings in PRD wording.
+- Execution mode: Discuss-only by default. Proceed on explicit “Proceed: docs-only” or “Proceed: code+docs”.
+- TDD: For code changes, start with tests (see docs/09-testing-strategy.md). Docs-only edits don’t require tests.
+- Resolution & citation: Resolve by doc_type; if ambiguous, use conventional path or title; cite file path + section.
