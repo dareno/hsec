@@ -436,18 +436,17 @@ Purpose: Keep docs the source of truth and in sync with the evolving domain. App
 - Mapping lives in the Architecture Overview's Component Index. Avoid duplicating paths elsewhere.
 
 ### Required outputs (per change)
-- Diffs for Context Map, Domain Model, Architecture Overview, and ADR
+- Diffs for Context Map, Domain Model, Architecture Overview, Interface Contracts, and ADR
 - One-sentence “why” per document (traceability)
 - Validation checklist (see below)
 - Brief list of test impacts (unit/integration/hardware)
- - Component Index updated for affected components
- - Breadcrumbs added/updated in code for affected Component IDs
+- Component Index updated for affected components
+- Breadcrumbs added/updated in code for affected Component IDs
 
 ### Validation checklist
 - Names/IDs/states consistent across all docs
 - Diagrams render without errors
 - Dependency rules respected (no domain → app/infra/acl imports)
-- Repositories kept to aggregates in Domain; time-series/read-model stores are app/infra ports
 - Product vision/requirements unchanged; inconsistencies flagged
  - Each Component ID in the Component Index is present in code via a breadcrumb comment `# Arch: <ID>`
 
@@ -469,6 +468,16 @@ Out of scope: what this PR intentionally does not change
 - Consequences: trade-offs and follow-ups
 - Links: updated doc sections and related PRs
 ```
+
+## Resolution & Citation
+
+- Resolution order: resolve by frontmatter `doc_type` → conventional path → title match.
+- Citation style: cite the resolved file path and the relevant section (heading and/or line range).
+- Identifier usage: PRD citations use plain terms; Domain Model/Interface Contracts use exact identifiers.
+- Examples:
+  - PRD: `docs/02-product-requirements.md` › “FR7: Sensor Data Processing”
+  - Domain Model: `docs/05-domain-model.md` › “Ubiquitous Language”
+  - Interface Contracts: `docs/07-interface-contracts.md` › “Events › Alarm”
 
 ## Environment & Tooling (uv + ruff + pytest)
 

@@ -97,6 +97,36 @@ This document defines the interfaces between hardware, software components, and 
     ```
   - Local time policy: evaluate against configured local timezone; convert to UTC for events.
 
+ - PortMap (ACL)
+  - Purpose: Map MCP23017 pins to stable sensor identifiers (and optional types) for deserialization and presentation.
+  - Allowed keys: "gpa0".."gpa7", "gpb0".."gpb7".
+  - JSON shape (schema v0):
+    ```json
+    {
+      "port_map": {
+        "gpa1": { "sensor_id": "hall_pir", "type": "pir" },
+        "gpa3": { "sensor_id": "kitchen_door_reed", "type": "reed" }
+      },
+      "schema_version": 0
+    }
+    ```
+  - TOML shape (example):
+    ```toml
+    # config/port_map.toml
+    schema_version = 0
+    [port_map]
+    gpa1 = { sensor_id = "hall_pir",          type = "pir"  }
+    gpa3 = { sensor_id = "kitchen_door_reed", type = "reed" }
+    ```
+  - Validation (strict v0):
+    - Keys must be valid pins; during layered merges, later sources overwrite earlier ones.
+    - sensor_id: required, non-empty string.
+    - type: optional; if present, one of {"reed","pir"}.
+    - Unknown fields rejected in strict mode.
+  - Notes:
+    - Binary normalization for reed/PIR: HIGH→1.0, LOW→0.0 (domain floats).
+    - CLI label config (`hsec.ports.toml`) is independent and may omit sensor_id; PortMap is for deserialization.
+
 ## Policy Decision API (OPA sidecar)
 
 - Endpoint: `POST http://127.0.0.1:8181/v1/data/hsec/alarm` (package path to retrieve both `allow` and `reasons`)

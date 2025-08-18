@@ -29,8 +29,7 @@ Note: FR titles below are convenience labels; authoritative definitions live in 
 | [FR6](02-product-requirements.md#fr6-alarm-context)              | Alarm Context            |          |                |       |
 | [FR7](02-product-requirements.md#fr7-sensor-data-processing)     | Sensor Data Processing   |          |                |       |
 | [FR8](02-product-requirements.md#fr8-state-tracking)             | State Tracking           |          |                |       |
-| [FR9](02-product-requirements.md#fr9-contextual-evaluation)      | Contextual Evaluation    |          |                |       |
-| [FR10](02-product-requirements.md#fr10-user-defined-time-windows)| User-Defined Time Windows|          |                |       |
+<!-- FR9 and FR10 removed from PRD; table reflects current PRD only -->
 
 ## Story Backlog
 Stories slice FRs into deliverable units. Relationship is many-to-many: a story may advance multiple FRs, and an FR typically requires multiple stories.

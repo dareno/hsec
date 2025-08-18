@@ -118,6 +118,8 @@ This table maps key diagram components to primary code locations. Update rows wh
 |:-----------------------|:-------------------------|:--------------------|:-------------------------------------|:-------------------------|
 | HW.Drv.MCP23017        | MCP23017 driver          | Infrastructure (HW) | hardware/mcp23017.py::MCP23017       | I2C config, reads        |
 | HW.GPIO.INT            | Pi GPIO INT adapter      | Infrastructure (HW) | hardware/mygpio.py::MyGPIO           | Debounce ~50 ms          |
+| SEC.ACL.PortMap        | PortMap (ACL) config     | ACL                 | (planned) config/port_map.toml       | pins→sensor_id,type      |
+| SEC.ACL.Deser          | Sensor deserializer      | ACL                 | services/sensor_deserializer.py      | MCP bits→SensorReading   |
 | SEC.APP.SensorMonitor  | Sensor Monitor           | Application         | (planned; path TBD)                  | Orchestration/event loop |
 | SEC.APP.EventProc      | Event Processor          | Application         | (planned; path TBD)                  | PEP → OPA decision req   |
 
@@ -136,9 +138,9 @@ This table maps key diagram components to primary code locations. Update rows wh
 ## Mapping Form to Function (Crawley)
 | Form (Implementation)                                                                                                 | Function               | Source                                      |
 |:----------------------------------------------------------------------------------------------------------------------|:-----------------------|:--------------------------------------------|
-| `hardware/mcp23017.py` (I2C config, read), `hardware/mygpio.py` (Pi INT line), Sensor Monitor (planned)               | Sensing                | PRD FR7–FR9; Context Map: Hardware I/O → Sensing |
+| `hardware/mcp23017.py` (I2C config, read), `hardware/mygpio.py` (Pi INT line), Sensor Monitor (planned)               | Sensing                | PRD FR7–FR8; Context Map: Hardware I/O → Sensing |
 | Event Processor (planned; PEP: state tracking + decision request), OPA (Rego) PDP                                      | Alarm Evaluation       | PRD FR3–FR6; Domain Model                   |
-| Config storage (TBD file or simple store) consumed by sensing/alarm components                                        | Configuration          | PRD FR1–FR4, FR10                           |
+| Config storage (TBD file or simple store) consumed by sensing/alarm components                                        | Configuration          | PRD FR1–FR4                                 |
 | Simple logger/sounder adapters subscribed to Alarm events                                                             | Notification (optional) | PRD FR5–FR6                                  |
 
 ## Runtime at a Glance
