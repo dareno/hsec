@@ -109,6 +109,7 @@ Note: In line with `04-context-map.md`, the Security BC comprises subdomains (mo
 - Testing Strategy: `09-testing-strategy.md`
 - Requirements Traceability: `10-requirements-traceability.md`
 - Process: [Developer Guide › Doc-change protocol](../DEVELOPER_GUIDE.md#doc-change-protocol)
+ - Hardware circuit: `hardware/port-expander-input-circuit.md`
 
 ### Component Index (bridging code)
 
@@ -118,6 +119,7 @@ This table maps key diagram components to primary code locations. Update rows wh
 |:-----------------------|:-------------------------|:--------------------|:-------------------------------------|:-------------------------|
 | HW.Drv.MCP23017        | MCP23017 driver          | Infrastructure (HW) | hardware/mcp23017.py::MCP23017       | I2C config, reads        |
 | HW.GPIO.INT            | Pi GPIO INT adapter      | Infrastructure (HW) | hardware/mygpio.py::MyGPIO           | Debounce ~50 ms          |
+| HW.Circ.MCP23017Input  | MCP23017 input circuit   | Hardware Docs       | docs/hardware/port-expander-input-circuit.md | 10 kΩ pull-ups; 1 kΩ series; INTB→BCM5 |
 | SEC.ACL.PortMap        | PortMap (ACL) config     | ACL                 | (planned) config/port_map.toml       | pins→sensor_id,type      |
 | SEC.ACL.Deser          | Sensor deserializer      | ACL                 | services/sensor_deserializer.py      | MCP bits→SensorReading   |
 | SEC.APP.SensorMonitor  | Sensor Monitor           | Application         | (planned; path TBD)                  | Orchestration/event loop |

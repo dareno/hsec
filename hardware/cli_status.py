@@ -13,6 +13,7 @@ except ModuleNotFoundError:  # pragma: no cover
     tomllib = None  # type: ignore
 
 from .mcp23017 import MCP23017
+from .mcp23017_config import load_and_apply  # Infrastructure config loader
 
 # Best-effort reuse from tests fixture (optional)
 try:  # pragma: no cover - runtime convenience
@@ -118,6 +119,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Path to ports TOML. Overrides env and defaults if provided.",
     )
     ap.add_argument(
+        "--mcp-config",
+        type=str,
+        default=os.getenv("HSEC_MCP23017_CFG", os.path.join("config", "mcp23017.yaml")),
+        help=(
+            "Path to MCP23017 YAML register config. If the file exists, the driver "
+            "will apply it at startup; otherwise it falls back to built-in setup()."
+        ),
+    )
+    ap.add_argument(
         "--clear",
         action="store_true",
         help="Clear screen between updates (ANSI).",
@@ -181,6 +191,21 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Open bus and device
     bus = smbus_open(args.bus)
     dev = MCP23017(bus=bus, device_address=args.addr)
+
+    # Apply hardware register configuration (Infrastructure). If the YAML file is
+    # absent or fails to load, fall back to the driver's default setup()
+    mcp_cfg_path = args.mcp_config
+    try:
+        if mcp_cfg_path and os.path.exists(mcp_cfg_path):
+            load_and_apply(dev, mcp_cfg_path)
+        else:
+            dev.setup()
+    except Exception as e:  # pragma: no cover - runtime guard
+        print(f"warn: MCP23017 configuration failed ({e}); continuing with defaults", file=sys.stderr)
+        try:
+            dev.setup()
+        except Exception:
+            pass
 
     try:
         while True:

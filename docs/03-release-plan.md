@@ -42,6 +42,7 @@ Stories slice FRs into deliverable units. Relationship is many-to-many: a story 
 | ST-004   | Window magnetic reed change detection (GPB7, main bedroom windows) | FR7 |       P1  | Done |
 | ST-005   | MCP23017 bits -> SensorReading         | FR7        |       P1  | Done |
 | ST-006   | Schema-versioned payload ingestion (v0)| FR7        |       P2  | Planned |
+| ST-007   | YAML-driven MCP23017 config; refactor setup() | FR7   |       P1  | Planned |
 
 ## ST-001 — Acceptance Criteria & Scope
 
@@ -242,6 +243,33 @@ Test Strategy (TDD)
 Traceability
 - FR: [FR7](02-product-requirements.md#fr7-sensor-data-processing)
 - Interface Contracts: `docs/07-interface-contracts.md#acl-inbound-payloads` (v0) introduced in this story.
+
+## ST-007 — Acceptance Criteria & Scope
+
+Scope
+- Make YAML configuration the single source of truth for MCP23017 register programming (Infrastructure / Hardware BC), keeping DDD boundaries intact.
+- Refactor `hardware/mcp23017.py::MCP23017.setup()` to delegate to the config loader’s default instead of writing registers inline.
+- Maintain backward compatibility for callers that still use `setup()`.
+- Document the behavior in driver docstrings and link to `config/mcp23017.yaml` and `hardware/mcp23017_config.py`.
+
+Acceptance Criteria (FR7: Sensor Data Processing)
+- `MCP23017.setup()` calls a default configuration from `hardware/mcp23017_config.py` (e.g., `default_config()`), and applies it via `apply_config()`.
+- Behavior matches current defaults: IOCON `MIRROR=1`, `INTPOL=1`, `ODR=0`; `INTCONA/B=0x00`; `GPINTENA/B=0xFF`; `IODIR*=0xFF`; `GPPU*=0x00`.
+- No direct register constants remain in `setup()`; duplication with the loader is removed.
+- `hardware/cli_status.py` continues to load YAML when the file exists and falls back to `setup()` otherwise.
+- Docs: `docs/hardware/port-expander-input-circuit.md` remains accurate (no changes needed); add a short note referencing YAML config as canonical.
+
+Test Strategy (TDD)
+- Unit tests (no hardware):
+  - `tests/unit/hardware/test_mcp23017_config_bytes.py`: given `default_config()`, `compute_register_bytes()` returns expected bytes (assert bit masks for IOCON/INTCON/GPINTEN/GPPU/IODIR/IPOL/DEFVAL).
+  - `tests/unit/hardware/test_mcp23017_setup_refactor.py`: with a `FakeBus` capturing writes, `MCP23017.setup()` writes the same register values as `compute_register_bytes(default_config())` and reads ports once when `post_setup_clear` is true.
+- Integration (software-only):
+  - `tests/integration/test_cli_applies_yaml_config.py`: patch `os.path.exists` to True, point `--mcp-config` at a temp YAML overriding one field (e.g., `INTPOL=low`), assert loader is invoked and bus sees the overridden IOCON byte.
+- Hardware-in-loop: existing HIL tests under `tests/hardware/mcp23017/` continue to pass without changes.
+
+Traceability
+- FR: [FR7](02-product-requirements.md#fr7-sensor-data-processing)
+- Architecture: `docs/06-architecture-overview.md` — Infrastructure (HW) adapter remains the only layer touched; Domain unaffected.
 
 ## Delivery & Traceability Conventions
 - Link PRs and commits to FRs and Stories:

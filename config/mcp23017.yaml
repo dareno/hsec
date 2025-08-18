@@ -1,0 +1,67 @@
+# MCP23017 configuration (register setup)
+# Schema version 1 — intended for "configuration as code". Drivers can read this
+# and program registers accordingly.
+
+schema_version: 1
+chip: MCP23017
+
+# Optional runtime wiring parameters
+hardware:
+  i2c:
+    bus: 1            # e.g., /dev/i2c-1
+    address: 0x20     # I2C address with A0–A2 tied low
+  interrupt:
+    pin: BCM5         # Raspberry Pi GPIO for INT input
+    mirror_ports: true  # IOCON.MIRROR
+    driver: push_pull   # push_pull | open_drain (IOCON.ODR)
+    polarity: active_high  # active_high | active_low (IOCON.INTPOL)
+    clear_on: read_ports   # read_ports | read_intcap (runtime strategy)
+
+# IOCON bit-field representation (preferred for readability)
+iocon:
+  bank: bank0              # bank0 | bank1 (addressing mode)
+  mirror: true             # mirror INTA/INTB
+  sequential_op: true      # auto-increment address pointer (SEQOP=0)
+  slew_rate_limit: true    # limit SDA slew rate (DISSLW=0)
+  hardware_addr_enable: false  # MCP23S17 only; keep false on MCP23017
+  open_drain: false        # ODR (only meaningful if driver=open_drain)
+  int_polarity: high       # high | low
+
+# Port-level defaults. Per-pin overrides may be supplied below.
+ports:
+  A:
+    direction: 0xFF          # IODIRA (1=input, 0=output)
+    pullup: 0x00             # GPPUA (1=enable internal pull-up)
+    polarity_invert: 0x00    # IPOLA (1=invert reads)
+    interrupt:
+      enable: 0xFF           # GPINTENA (1=enable per bit)
+      mode: change           # change | compare_defval (maps to INTCONA)
+      defval: 0xFF           # DEFVALA (used only if mode=compare_defval)
+  B:
+    direction: 0xFF          # IODIRB
+    pullup: 0x00             # GPPUB
+    polarity_invert: 0x00    # IPOLB
+    interrupt:
+      enable: 0xFF           # GPINTENB
+      mode: change           # maps to INTCONB
+      defval: 0xFF           # DEFVALB
+
+# Optional per-pin overrides (examples shown; remove or edit as needed).
+# Pins are GPA0..GPA7, GPB0..GPB7.
+# per_pins:
+#   - pin: GPA1
+#     pullup: 0              # override just this bit in GPPUA
+#     polarity_invert: 0
+#     interrupt:
+#       enable: 1
+#       mode: change         # or compare_defval
+#       defval: 1
+
+# Post-setup behavior for the driver.
+post_setup:
+  clear_interrupt: true  # perform an initial clear by reading ports after enabling INTs
+
+notes:
+  - External 10 kΩ pull-ups exist on all channels; keep GPPU disabled (0x00).
+  - Only INTB is wired to Pi BCM5; MIRROR should be true so either port asserts INT.
+  - Any-change interrupt mode (INTCONx=0x00) matches our current driver behavior.
