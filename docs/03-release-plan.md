@@ -41,7 +41,7 @@ Stories slice FRs into deliverable units. Relationship is many-to-many: a story 
 | ST-002   | Front door plunger contact change detection (GPA6)| FR7        |       P1  | Done |
 | ST-003   | Door plunger contact sensors verification (kitchen GPA3, family-room GPA4, basement GPA7) | FR7 |       P1  | Done    |
 | ST-004   | Window magnetic reed change detection (GPB7, main bedroom windows) | FR7 |       P1  | Done |
-| ST-005   | MCP23017 bits -> SensorReading         | FR7        |       P1  | Planned |
+| ST-005   | MCP23017 bits -> SensorReading         | FR7        |       P1  | Done |
 | ST-006   | Schema-versioned payload ingestion (v0)| FR7        |       P2  | Planned |
 
 ## ST-001 — Acceptance Criteria & Scope
